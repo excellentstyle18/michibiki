@@ -334,6 +334,25 @@
       color: var(--text-light);
     }
 
+    /* 数系ラベル・区切り */
+    .num-system-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      margin-bottom: 0.8rem;
+    }
+    .num-divider {
+      border: none;
+      border-top: 1px solid rgba(201,168,76,0.2);
+      margin: 1.4rem 0;
+    }
+    .lifepath-emblem {
+      border-color: rgba(100,160,255,0.5) !important;
+      box-shadow: 0 0 16px rgba(100,160,255,0.15);
+    }
+    .lifepath-emblem .num { color: #9dcfff !important; }
+    .lifepath-emblem .num-label { color: rgba(157,207,255,0.7) !important; }
+
     /* 今日の運勢 */
     .today-fortune {
       display: grid;
@@ -706,12 +725,15 @@
       <div class="traits-grid" id="traits-grid"></div>
     </div>
 
-    <!-- 天性の性質 -->
+    <!-- 天性の性質 + ライフパスナンバー -->
     <div class="section-card">
       <div class="section-title">
         <span class="icon">◎</span>
-        <span>天 性 数</span>
+        <span>天 性 数　・　ライフパスナンバー</span>
       </div>
+
+      <!-- 天性数（月日） -->
+      <div class="num-system-label">◇ 天性数（誕生月・日）</div>
       <div class="tensei-display">
         <div class="tensei-number" id="tensei-emblem">
           <div class="num" id="tensei-num"></div>
@@ -721,6 +743,22 @@
           <h3 id="tensei-type"></h3>
           <div class="tensei-keyword" id="tensei-keyword"></div>
           <p id="tensei-desc"></p>
+        </div>
+      </div>
+
+      <hr class="num-divider">
+
+      <!-- ライフパスナンバー（年月日） -->
+      <div class="num-system-label">◇ ライフパスナンバー（生年月日）</div>
+      <div class="tensei-display">
+        <div class="tensei-number lifepath-emblem" id="lifepath-emblem">
+          <div class="num" id="lifepath-num"></div>
+          <div class="num-label">L.P.N</div>
+        </div>
+        <div class="tensei-info">
+          <h3 id="lifepath-type"></h3>
+          <div class="tensei-keyword" id="lifepath-keyword"></div>
+          <p id="lifepath-desc"></p>
         </div>
       </div>
     </div>
@@ -1245,12 +1283,12 @@ const ORACLE_MSGS = [
 ];
 
 // ─── 九星計算 ────────────────────────────────────────────────
-function calcKyusei(year, month) {
-  // 節分(2月4日頃)以前は前年扱いが基本。ここでは月で簡易判定
-  let y = (month <= 1) ? year - 1 : year; // 1月は前年扱い
+function calcKyusei(year, month, day) {
+  // 節分(2月4日頃)以前は前年扱い
+  let y = (month < 2 || (month === 2 && day <= 3)) ? year - 1 : year;
   let sum = y.toString().split('').reduce((a,b) => a + parseInt(b), 0);
   while(sum >= 10) sum = sum.toString().split('').reduce((a,b) => a + parseInt(b), 0);
-  let n = 10 - sum;
+  let n = 11 - sum;
   if(n <= 0) n += 9;
   if(n > 9)  n = n % 9 || 9;
   return n;
@@ -1260,6 +1298,19 @@ function calcKyusei(year, month) {
 function calcTensei(month, day) {
   let sum = (month + day);
   // マスターナンバーチェック
+  if(sum === 11 || sum === 22 || sum === 33) return sum;
+  while(sum >= 10) {
+    sum = sum.toString().split('').reduce((a,b) => a + parseInt(b), 0);
+    if(sum === 11 || sum === 22 || sum === 33) return sum;
+  }
+  return sum;
+}
+
+// ─── ライフパスナンバー計算 ──────────────────────────────────
+function calcLifePath(year, month, day) {
+  // 生年月日のすべての桁を合計
+  let sum = (year.toString() + month.toString() + day.toString())
+    .split('').reduce((a,b) => a + parseInt(b), 0);
   if(sum === 11 || sum === 22 || sum === 33) return sum;
   while(sum >= 10) {
     sum = sum.toString().split('').reduce((a,b) => a + parseInt(b), 0);
@@ -1456,13 +1507,15 @@ function divinate() {
   }
 
   // ── 計算
-  const kyuseiNum = calcKyusei(year, month);
-  const tenseiNum = calcTensei(month, day);
-  const today     = new Date();
-  const seed      = kyuseiNum * 100 + tenseiNum + today.getDate() + today.getMonth();
+  const kyuseiNum   = calcKyusei(year, month, day);
+  const tenseiNum   = calcTensei(month, day);
+  const lifepathNum = calcLifePath(year, month, day);
+  const today       = new Date();
+  const seed        = kyuseiNum * 100 + tenseiNum + today.getDate() + today.getMonth();
 
   const ks = KYUSEI[kyuseiNum];
-  const ts = TENSEI[tenseiNum] || TENSEI[9]; // fallback
+  const ts = TENSEI[tenseiNum]   || TENSEI[9]; // fallback
+  const lp = TENSEI[lifepathNum] || TENSEI[9]; // fallback
 
   // ── ヘッダー
   document.getElementById('display-name').textContent =
@@ -1493,6 +1546,12 @@ function divinate() {
   document.getElementById('tensei-type').textContent = ts.type;
   document.getElementById('tensei-keyword').textContent = ts.keyword;
   document.getElementById('tensei-desc').textContent = ts.desc;
+
+  // ── ライフパスナンバー
+  document.getElementById('lifepath-num').textContent = lifepathNum;
+  document.getElementById('lifepath-type').textContent = lp.type;
+  document.getElementById('lifepath-keyword').textContent = lp.keyword;
+  document.getElementById('lifepath-desc').textContent = lp.desc;
 
   // ── 今日の運勢
   const todayTitle = document.getElementById('today-title');
