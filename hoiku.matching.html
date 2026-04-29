@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保育士 職場マッチング診断</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans JP', sans-serif; background: #fdf8f0; color: #4a4a4a; min-height: 100vh; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px 16px 40px; }
+
+    /* ── スタート ── */
+    .logo-area { text-align: center; padding: 40px 0 28px; }
+    .logo-icon { font-size: 60px; margin-bottom: 10px; }
+    .app-title { font-size: 22px; font-weight: 700; color: #5a9e6f; line-height: 1.4; }
+    .app-sub { font-size: 13px; color: #999; margin-top: 6px; }
+    .info-card { background: #fff; border-radius: 14px; padding: 22px 20px; margin-bottom: 16px; box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .info-card h2 { font-size: 15px; font-weight: 700; color: #5a9e6f; margin-bottom: 12px; }
+    .info-card ul { list-style: none; }
+    .info-card ul li { font-size: 13px; line-height: 1.7; padding-left: 20px; position: relative; }
+    .info-card ul li::before { content: "✓"; position: absolute; left: 0; color: #f4a860; font-weight: 700; }
+    .btn-primary { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #5a9e6f, #7bc47d); color: #fff; font-size: 16px; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; box-shadow: 0 4px 14px rgba(90,158,111,0.35); transition: transform 0.15s; }
+    .btn-primary:hover { transform: translateY(-2px); }
+
+    /* ── 設問 ── */
+    #screen-question { display: none; }
+    .progress-wrapper { margin-bottom: 20px; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: #999; margin-bottom: 6px; }
+    .progress-track { background: #e5e5e5; border-radius: 4px; height: 7px; overflow: hidden; }
+    .progress-fill { background: linear-gradient(90deg, #5a9e6f, #7bc47d); height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .progress-fill.part1 { background: linear-gradient(90deg, #9b70d4, #b890e8); }
+
+    .q-card { background: #fff; border-radius: 16px; padding: 26px 22px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); transition: opacity 0.2s ease; }
+    .q-card.fade-out { opacity: 0; }
+    .q-card.fade-in { animation: fadeInUp 0.3s ease forwards; }
+
+    /* パート別バッジ */
+    .axis-tag { display: inline-block; border-radius: 20px; font-size: 11px; font-weight: 500; padding: 2px 12px; margin-bottom: 14px; border: 1px solid; }
+    .axis-tag.part1 { background: #f4eeff; color: #7a50c8; border-color: #d0b8f0; }
+    .axis-tag.part2 { background: #f0faf2; color: #5a9e6f; border-color: #c0e0c8; }
+
+    /* パート切替バナー */
+    .part-banner { background: linear-gradient(135deg, #f0faf2, #e8f8ee); border: 1px solid #b8e0c0; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; text-align: center; animation: fadeInUp 0.4s ease; }
+    .part-banner-title { font-size: 15px; font-weight: 700; color: #5a9e6f; margin-bottom: 4px; }
+    .part-banner-sub { font-size: 12px; color: #888; }
+
+    .q-num { font-size: 12px; font-weight: 700; color: #f4a860; margin-bottom: 8px; }
+    .q-text { font-size: 15px; font-weight: 500; line-height: 1.75; }
+    .scale-wrap { margin-top: 22px; }
+    .scale-hints { display: flex; justify-content: space-between; font-size: 11px; color: #bbb; margin-bottom: 10px; }
+    .scale-btns { display: flex; gap: 8px; }
+    .scale-btn { flex: 1; padding: 12px 4px; border: 2px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 15px; font-weight: 700; color: #ccc; cursor: pointer; transition: all 0.18s; font-family: 'Noto Sans JP', sans-serif; }
+    .scale-btn:hover { border-color: #7bc47d; color: #7bc47d; }
+    .scale-btn.selected { background: linear-gradient(135deg, #5a9e6f, #7bc47d); border-color: #5a9e6f; color: #fff; transform: scale(1.07); }
+    .scale-btn.selected.part1 { background: linear-gradient(135deg, #9b70d4, #b890e8); border-color: #9b70d4; }
+
+    .nav-row { display: flex; gap: 10px; }
+    .btn-back { padding: 14px 20px; background: #f0f0f0; color: #999; border: none; border-radius: 50px; font-size: 14px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: background 0.15s; }
+    .btn-back:hover { background: #e5e5e5; }
+
+    /* ── 結果 ── */
+    #screen-result { display: none; }
+
+    /* 合体タイプカード */
+    .combined-card { background: linear-gradient(135deg, #f4eeff, #f0faf2); border-radius: 16px; padding: 24px 20px; margin-bottom: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); text-align: center; }
+    .combined-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #9b70d4; margin-bottom: 10px; }
+    .combined-types { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .combined-badge { padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 700; }
+    .combined-badge.personality { background: #ede0ff; color: #7a50c8; border: 1.5px solid #c8a8f0; }
+    .combined-badge.work { background: #e0f4e8; color: #3a8a50; border: 1.5px solid #a0d8b0; }
+    .combined-x { font-size: 18px; color: #bbb; font-weight: 700; }
+    .combined-comment { font-size: 13px; line-height: 1.85; color: #555; }
+
+    .sec-title { font-size: 15px; font-weight: 700; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+    .sec-title::before { content: ''; display: inline-block; width: 4px; height: 16px; background: linear-gradient(to bottom, #5a9e6f, #7bc47d); border-radius: 2px; }
+
+    /* チャート2枚並べ */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-box { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .chart-box-title { font-size: 12px; font-weight: 700; text-align: center; margin-bottom: 4px; color: #888; }
+    .chart-hint { font-size: 10px; color: #bbb; text-align: center; margin-bottom: 8px; }
+    .chart-legend { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+    .chart-legend-item { display: flex; justify-content: space-between; font-size: 10px; color: #888; padding: 2px 0; border-bottom: 1px dashed #f0f0f0; }
+    .chart-legend-item:last-child { border-bottom: none; }
+    .legend-label { color: #666; }
+    .legend-note { color: #aaa; font-size: 10px; }
+
+    /* タグ */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .tag { padding: 4px 13px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .tag-s { background: #e8f8ee; color: #3a8a50; border: 1px solid #b8e0c0; }
+    .tag-c { background: #fff4e8; color: #c47a30; border: 1px solid #f5d0a0; }
+    .tag-p { background: #f4eeff; color: #7a50c8; border: 1px solid #d0b8f0; }
+
+    /* 施設バー */
+    .fac-list { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .fac-item { margin-bottom: 14px; }
+    .fac-item:last-child { margin-bottom: 0; }
+    .fac-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; margin-bottom: 5px; }
+    .fac-pct { font-size: 12px; font-weight: 700; color: #5a9e6f; }
+    .bar-track { background: #f0f0f0; border-radius: 4px; height: 9px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #5a9e6f, #7bc47d); border-radius: 4px; width: 0%; transition: width 1s ease; }
+    .fac-stars { font-size: 11px; color: #f4a860; margin-top: 2px; }
+
+    /* TOP3 */
+    .top3 { display: flex; flex-direction: column; gap: 12px; }
+    .top-card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.07); border-left: 4px solid #ccc; animation: fadeInUp 0.4s ease forwards; }
+    .top-card:nth-child(1) { border-left-color: #f4a860; animation-delay: 0s; }
+    .top-card:nth-child(2) { border-left-color: #5a9e6f; animation-delay: 0.1s; }
+    .top-card:nth-child(3) { border-left-color: #80b8e4; animation-delay: 0.2s; }
+    .top-rank { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #aaa; margin-bottom: 4px; }
+    .top-card:nth-child(1) .top-rank { color: #f4a860; }
+    .top-card:nth-child(2) .top-rank { color: #5a9e6f; }
+    .top-card:nth-child(3) .top-rank { color: #80b8e4; }
+    .top-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .top-stars { font-size: 14px; color: #f4a860; margin-bottom: 10px; }
+    .top-reasons { display: flex; flex-direction: column; gap: 8px; }
+    .top-reason { font-size: 12px; line-height: 1.7; color: #555; background: #fafafa; border-radius: 8px; padding: 8px 12px; border-left: 3px solid #e0e0e0; }
+    .top-reason.r-personality { border-left-color: #9b70d4; }
+    .top-reason.r-work       { border-left-color: #5a9e6f; }
+    .top-reason.r-score      { border-left-color: #f4a860; }
+    .top-reason-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .top-reason.r-personality .top-reason-label { color: #9b70d4; }
+    .top-reason.r-work       .top-reason-label { color: #5a9e6f; }
+    .top-reason.r-score      .top-reason-label { color: #f4a860; }
+
+    .action-area { display: flex; flex-direction: column; gap: 10px; margin-top: 28px; }
+    .btn-outline { padding: 14px; background: #fff; color: #5a9e6f; border: 2px solid #5a9e6f; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: background 0.15s; }
+    .btn-outline:hover { background: #f0faf2; }
+    .btn-retry { padding: 13px; background: #f0f0f0; color: #999; border: none; border-radius: 50px; font-size: 14px; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: background 0.15s; }
+    .btn-retry:hover { background: #e5e5e5; }
+    .copy-msg { text-align: center; font-size: 12px; color: #5a9e6f; height: 18px; }
+
+    /* ── ビッグファイブ詳細 ── */
+    .bf-list { display: flex; flex-direction: column; gap: 12px; }
+    .bf-card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 3px 12px rgba(0,0,0,0.07); animation: fadeInUp 0.4s ease forwards; }
+    .bf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .bf-name { font-size: 15px; font-weight: 700; color: #4a4a4a; }
+    .bf-level { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .bf-level.high { background: #e0f4e8; color: #3a8a50; border: 1px solid #b8e0c0; }
+    .bf-level.low  { background: #fff4e8; color: #c47a30; border: 1px solid #f5d0a0; }
+    .bf-summary { font-size: 12px; color: #aaa; margin-bottom: 8px; }
+    .bf-feature { font-size: 13px; line-height: 1.75; color: #555; margin-bottom: 10px; }
+    .bf-row { display: flex; gap: 8px; }
+    .bf-tag { flex: 1; font-size: 11px; line-height: 1.6; padding: 8px 10px; border-radius: 8px; }
+    .bf-tag.strength { background: #f0faf2; border-left: 3px solid #5a9e6f; color: #3a6a4a; }
+    .bf-tag.caution  { background: #fff9f0; border-left: 3px solid #f4a860; color: #8a5a30; }
+    .bf-tag-label { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+    .bf-tag.strength .bf-tag-label { color: #5a9e6f; }
+    .bf-tag.caution  .bf-tag-label { color: #f4a860; }
+    .bf-overall { background: #f8f8f8; border-radius: 12px; padding: 14px 16px; font-size: 12px; line-height: 1.85; color: #666; margin-top: 4px; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @media print { .action-area { display: none; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+
+<!-- ===== スタート ===== -->
+<div id="screen-start">
+  <div class="container">
+    <div class="logo-area">
+      <div class="logo-icon">🌱</div>
+      <div class="app-title">保育士 職場マッチング診断</div>
+      <div class="app-sub">関東版 ｜ 25問で自分に合った職場がわかる</div>
+    </div>
+    <div class="info-card">
+      <h2>この診断でわかること</h2>
+      <ul>
+        <li>あなたの性格タイプ（ビッグファイブ理論ベース・6タイプ）</li>
+        <li>保育観・働き方タイプ（7タイプ）</li>
+        <li>2つのタイプを掛け合わせた総合診断コメント</li>
+        <li>関東エリア 8種の施設との相性スコア＆TOP3</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h2>回答のポイント</h2>
+      <ul>
+        <li>Part 1（10問）：性格診断 ／ Part 2（15問）：保育診断</li>
+        <li>「理想の働き方」で5段階を直感的に選んでください</li>
+        <li>所要時間：約5〜8分 ／ 個人情報の送信なし</li>
+      </ul>
+    </div>
+    <button class="btn-primary" onclick="startDiagnosis()">診断をスタートする →</button>
+  </div>
+</div>
+
+
+<!-- ===== 設問 ===== -->
+<div id="screen-question">
+  <div class="container">
+    <div class="progress-wrapper">
+      <div class="progress-meta">
+        <span id="progress-text">1 / 25問</span>
+        <span id="progress-part"></span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:4%"></div>
+      </div>
+    </div>
+
+    <div id="part-banner" style="display:none"></div>
+
+    <div class="q-card" id="q-card">
+      <div class="axis-tag" id="axis-tag"></div>
+      <div class="q-num" id="q-num"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="scale-wrap">
+        <div class="scale-hints">
+          <span>まったく<br>そう思わない</span>
+          <span style="text-align:right">とても<br>そう思う</span>
+        </div>
+        <div class="scale-btns" id="scale-btns">
+          <button class="scale-btn" data-val="1" onclick="selectAnswer(1)">1</button>
+          <button class="scale-btn" data-val="2" onclick="selectAnswer(2)">2</button>
+          <button class="scale-btn" data-val="3" onclick="selectAnswer(3)">3</button>
+          <button class="scale-btn" data-val="4" onclick="selectAnswer(4)">4</button>
+          <button class="scale-btn" data-val="5" onclick="selectAnswer(5)">5</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back" id="btn-back" onclick="prevQ()">← 戻る</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== 結果 ===== -->
+<div id="screen-result">
+  <div class="container">
+
+    <!-- 合体タイプ -->
+    <div class="combined-card">
+      <div class="combined-label">あなたの総合タイプ</div>
+      <div class="combined-types">
+        <span class="combined-badge personality" id="r-ptype"></span>
+        <span class="combined-x">×</span>
+        <span class="combined-badge work" id="r-wtype"></span>
+      </div>
+      <div class="combined-comment" id="r-combined-comment"></div>
+      <div class="tag-row" id="r-tags"></div>
+    </div>
+
+    <!-- 2軸チャート -->
+    <div class="sec-title">性格特性 ＆ 保育観スコア</div>
+    <div class="charts-grid">
+      <div class="chart-box">
+        <div class="chart-box-title">🧠 性格特性</div>
+        <div class="chart-hint">外側ほどその特性が強い</div>
+        <canvas id="personalityChart" height="200"></canvas>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><span class="legend-label">開放性</span><span class="legend-note">新しいことへの好奇心</span></div>
+          <div class="chart-legend-item"><span class="legend-label">誠実性</span><span class="legend-note">責任感・丁寧さ</span></div>
+          <div class="chart-legend-item"><span class="legend-label">外向性</span><span class="legend-note">社交性・積極性</span></div>
+          <div class="chart-legend-item"><span class="legend-label">協調性</span><span class="legend-note">思いやり・共感力</span></div>
+          <div class="chart-legend-item"><span class="legend-label">安定性</span><span class="legend-note">ストレス耐性・落ち着き</span></div>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-box-title">🌱 保育観・働き方</div>
+        <div class="chart-hint">外側ほどその傾向が強い</div>
+        <canvas id="workChart" height="200"></canvas>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><span class="legend-label">保育哲学</span><span class="legend-note">自由保育・理念重視</span></div>
+          <div class="chart-legend-item"><span class="legend-label">キャリア</span><span class="legend-note">昇進・資格への意欲</span></div>
+          <div class="chart-legend-item"><span class="legend-label">給与待遇</span><span class="legend-note">収入・福利厚生重視</span></div>
+          <div class="chart-legend-item"><span class="legend-label">職場環境</span><span class="legend-note">残業・ICT・私立志向</span></div>
+          <div class="chart-legend-item"><span class="legend-label">人間関係</span><span class="legend-note">チームワーク重視</span></div>
+          <div class="chart-legend-item"><span class="legend-label">専門分野</span><span class="legend-note">乳児・特定分野への関心</span></div>
+          <div class="chart-legend-item"><span class="legend-label">価値観</span><span class="legend-note">安定志向・ストレス耐性</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ビッグファイブ詳細 -->
+    <div class="sec-title">性格特性の詳細</div>
+    <div class="bf-list" id="bf-list"></div>
+
+    <!-- TOP3 -->
+    <div class="sec-title">おすすめ施設タイプ TOP 3</div>
+    <div class="top3" id="top3"></div>
+
+    <div class="action-area">
+      <button class="btn-retry" onclick="retake()">最初からやり直す</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* =============================================
+   25問データ
+   Part1(10問): 性格診断 pTrait = O/C/E/A/N
+   Part2(15問): 保育診断 axis = 1〜7
+============================================= */
+const questions = [
+  // ── Part 1: 性格診断（ビッグファイブ）──
+  { id:1,  part:1, pTrait:'O', axisLabel:"① 開放性",
+    text:"新しい保育メソッドや活動を積極的に取り入れたいと思う" },
+  { id:2,  part:1, pTrait:'O', axisLabel:"① 開放性",
+    text:"マニュアル通りより、自分なりの工夫やアレンジを加えたい" },
+  { id:3,  part:1, pTrait:'C', axisLabel:"② 誠実性",
+    text:"連絡帳・指導計画などの書類仕事を丁寧にこなせる" },
+  { id:4,  part:1, pTrait:'C', axisLabel:"② 誠実性",
+    text:"決められたルールや手順をきちんと守ることが得意だ" },
+  { id:5,  part:1, pTrait:'E', axisLabel:"③ 外向性",
+    text:"保護者との会話や懇談会での発言は苦にならない" },
+  { id:6,  part:1, pTrait:'E', axisLabel:"③ 外向性",
+    text:"職員会議やミーティングで自分の意見を積極的に発言できる" },
+  { id:7,  part:1, pTrait:'A', axisLabel:"④ 協調性",
+    text:"同僚が困っていたら、自分の仕事を後回しにしてでも助けたい" },
+  { id:8,  part:1, pTrait:'A', axisLabel:"④ 協調性",
+    text:"子どもの気持ちに寄り添い、じっくり話を聞くことが得意だ" },
+  { id:9,  part:1, pTrait:'N', axisLabel:"⑤ 安定性",
+    text:"クレームや叱責を受けると、しばらく気持ちを引きずってしまう",
+    reverse: true },
+  { id:10, part:1, pTrait:'N', axisLabel:"⑤ 安定性",
+    text:"保育中に予想外の出来事が起きても、落ち着いて対処できる" },
+
+  // ── Part 2: 保育診断（メイン15問）──
+  { id:11, part:2, axis:1, axisLabel:"保育哲学・教育観",
+    text:"子どもが自分でやりたいことを選べる「自由保育」の方が、一斉保育より子どもの成長につながると思う" },
+  { id:12, part:2, axis:1, axisLabel:"保育哲学・教育観",
+    text:"モンテッソーリや森のようちえんなど、特定の保育メソッドに強い関心がある" },
+  { id:13, part:2, axis:2, axisLabel:"キャリア・成長志向",
+    text:"将来は主任・園長などマネジメント職を目指したい" },
+  { id:14, part:2, axis:2, axisLabel:"キャリア・成長志向",
+    text:"専門性を高めるために、研修や資格取得に積極的に取り組みたい" },
+  { id:15, part:2, axis:3, axisLabel:"給与・福利厚生",
+    text:"給与・賞与の水準は、職場選びで最も重要な条件の一つだ" },
+  { id:16, part:2, axis:3, axisLabel:"給与・福利厚生",
+    text:"家賃補助・交通費・育児支援など、福利厚生の充実度は職場選びに大きく影響する" },
+  { id:17, part:2, axis:4, axisLabel:"職場環境・働きやすさ",
+    text:"残業が少なく、定時に帰れることを職場選びで特に重視する" },
+  { id:18, part:2, axis:4, axisLabel:"職場環境・働きやすさ",
+    text:"公立・行政運営の施設より、私立や企業が運営する施設の方が自分に合っていると感じる" },
+  { id:19, part:2, axis:5, axisLabel:"人間関係・チームワーク",
+    text:"職員みんなで盛り上がる、和気あいあいとした雰囲気の職場が好きだ" },
+  { id:20, part:2, axis:5, axisLabel:"人間関係・チームワーク",
+    text:"担任一人で抱え込むより、チームで情報を共有・協力しながら保育する体制が好きだ" },
+  { id:21, part:2, axis:6, axisLabel:"専門分野・得意年齢層",
+    text:"0〜2歳の乳児保育（授乳・離乳食・発達サポート）に特に関心・得意意識がある" },
+  { id:22, part:2, axis:6, axisLabel:"専門分野・得意年齢層",
+    text:"食育・音楽・英語・障害児支援など、特定の専門分野を活かした保育がしたい" },
+  { id:23, part:2, axis:7, axisLabel:"価値観・ストレス耐性",
+    text:"職場での新しい取り組みや変化には、柔軟に対応できる方だ" },
+  { id:24, part:2, axis:7, axisLabel:"価値観・ストレス耐性",
+    text:"保育のやりがいより、雇用・収入の安定を優先したい" },
+  { id:25, part:2, axis:7, axisLabel:"価値観・ストレス耐性",
+    text:"クレーム対応・人手不足など困難な状況でも、落ち着いて対処できる自信がある" }
+];
+
+/* =============================================
+   性格タイプ（6種）
+   idealProfile: {O, C, E, A, S} 各1〜5スケール
+============================================= */
+const personalityTypes = [
+  { id:"1", emoji:"🤝", name:"共感リーダー型",
+    idealProfile: { O:3.5, C:3.5, E:4.5, A:4.5, S:4.0 },
+    description:"高い共感力とリーダーシップを兼ね備え、チームをまとめながら保護者とも深い信頼関係を築けるタイプ。",
+    strengths:["チームをまとめる力","保護者との関係構築","場の雰囲気づくり"] },
+  { id:"2", emoji:"🔬", name:"職人・専門家型",
+    idealProfile: { O:4.0, C:4.5, E:2.5, A:3.5, S:3.5 },
+    description:"高い誠実性と探究心を持ち、専門性を深めることに喜びを感じるタイプ。書類・記録も丁寧でミスが少ない。",
+    strengths:["専門知識の深さ","書類・記録の丁寧さ","継続的な学習力"] },
+  { id:"3", emoji:"💚", name:"ケア・サポート型",
+    idealProfile: { O:3.0, C:3.5, E:3.0, A:4.5, S:4.0 },
+    description:"子どもや同僚への深い思いやりと精神的安定感を持つタイプ。困っている人を自然にサポートできる。",
+    strengths:["共感・傾聴力","精神的安定感","場の調整力"] },
+  { id:"4", emoji:"🚀", name:"チャレンジ・革新型",
+    idealProfile: { O:4.5, C:3.0, E:4.5, A:3.0, S:3.5 },
+    description:"好奇心旺盛で新しい挑戦を楽しむエネルギッシュなタイプ。変化の多い環境で最もパフォーマンスを発揮する。",
+    strengths:["変化への適応力","アイデア発想力","場を盛り上げる力"] },
+  { id:"5", emoji:"🏛️", name:"安定・堅実型",
+    idealProfile: { O:2.5, C:4.5, E:3.0, A:3.5, S:4.0 },
+    description:"高い責任感と計画性を持ち、ルールを守りながら着実に仕事をこなすタイプ。信頼性が高く長期で評価される。",
+    strengths:["高い責任感","計画的な仕事ぶり","ルール遵守"] },
+  { id:"6", emoji:"⚖️", name:"バランス型",
+    idealProfile: { O:3.0, C:3.0, E:3.0, A:3.0, S:3.0 },
+    description:"5つの特性がバランスよく備わっており、状況に応じて柔軟に対応できるタイプ。施設を問わず適応力が高い。",
+    strengths:["高い適応力","状況判断力","幅広い対応力"] }
+];
+
+/* =============================================
+   保育士タイプ（7種）
+============================================= */
+const workTypes = [
+  { id:"A", emoji:"🌳", name:"理念重視の 自由保育型",
+    idealProfile:[4.5,3.0,2.5,3.5,3.5,3.8,3.0],
+    description:"保育の理念や哲学を大切にし、子どもの自主性を尊重することに情熱を持つタイプ。モンテッソーリや自然保育など独自メソッドへの関心が高い。",
+    strengths:["子どもの個性を引き出す力","保育哲学の深い理解","環境設定のセンス"],
+    cautions:["待遇面で妥協しがち","組織ルールとの摩擦"],
+    facilityScores:[60,75,88,90,50,65,72,45] },
+  { id:"B", emoji:"🚀", name:"キャリアアップ志向の リーダー型",
+    idealProfile:[3.0,4.5,3.5,3.0,3.5,3.5,3.8],
+    description:"成長やキャリアアップに高いモチベーションを持つタイプ。主任・園長などのマネジメント職を視野に入れ、研修や資格取得にも積極的。",
+    strengths:["リーダーシップ","研修・学習への積極性","目標達成への行動力"],
+    cautions:["過負荷になりやすい","ワークライフバランスの崩れ"],
+    facilityScores:[65,85,82,70,75,55,65,60] },
+  { id:"C", emoji:"🏦", name:"安定・待遇重視の 堅実型",
+    idealProfile:[2.5,2.5,4.5,3.8,3.0,2.5,4.2],
+    description:"給与・賞与・社会保険・退職金など待遇面をしっかり確認して職場を選ぶ堅実なタイプ。長期的な安心を軸に職場を評価する。",
+    strengths:["長期就業の安定感","待遇・制度の比較力","生活設計力"],
+    cautions:["やりがいの優先度が下がりやすい","変化への適応に時間がかかることも"],
+    facilityScores:[92,68,62,55,80,60,58,75] },
+  { id:"D", emoji:"🤝", name:"チーム重視の 協調型",
+    idealProfile:[3.0,3.0,3.0,3.5,4.5,3.0,3.5],
+    description:"職場の人間関係や雰囲気を最も大切にするタイプ。チームで協力して保育に取り組むことにやりがいを感じ、保護者対応も得意。",
+    strengths:["職員間の調整力","保護者との関係構築","チームの雰囲気づくり"],
+    cautions:["個人の専門性が埋もれがち","職場環境に依存しすぎる面も"],
+    facilityScores:[75,82,72,65,65,62,70,62] },
+  { id:"E", emoji:"⚖️", name:"ワークライフバランス優先の 柔軟型",
+    idealProfile:[3.0,2.5,3.5,4.5,3.5,3.0,3.8],
+    description:"残業の少なさやシフトの柔軟性を重視し、仕事と生活のバランスを保ちながら長く働くことを目指すタイプ。",
+    strengths:["長期就業への意識","効率的な業務遂行","セルフケア能力"],
+    cautions:["繁忙期のギャップへの対応","急なシフト変更への抵抗感"],
+    facilityScores:[80,65,62,55,88,78,60,72] },
+  { id:"F", emoji:"🔬", name:"専門家志向の スペシャリスト型",
+    idealProfile:[3.5,4.0,3.0,3.5,3.0,4.5,3.5],
+    description:"障害児支援・食育・音楽・英語など特定分野を深く追求したいタイプ。自然保育やSTEAMなど新しいアプローチにも積極的。",
+    strengths:["専門知識・技術の深さ","新分野への挑戦意欲","子どもの特性理解"],
+    cautions:["施設とのミスマッチリスク","汎用業務への意欲が低下しやすい"],
+    facilityScores:[58,70,75,80,55,72,92,88] },
+  { id:"G", emoji:"🏛️", name:"地域密着の 公立・安定型",
+    idealProfile:[3.0,2.5,4.0,4.0,3.8,2.5,4.5],
+    description:"公立施設や行政運営の保育に安定・信頼・責任を見出すタイプ。地域の子どもたちと長期的に関わり、着実な積み上げを好む。",
+    strengths:["継続的な地域貢献","制度・法規への精通","安定した勤務姿勢"],
+    cautions:["民間のスピード感が苦手なことも","変化への対応に時間がかかることも"],
+    facilityScores:[95,68,65,58,50,55,60,65] }
+];
+
+/* =============================================
+   施設データ（8種）
+============================================= */
+const facilities = [
+  { name:"認可保育園（公立）", icon:"🏛️",
+    comments:{ A:"独自の理念保育を実践する余地は少ないですが、落ち着いた環境で丁寧に働けます",B:"昇格ルートが明確。管理職を目指すキャリアパスが整っています",C:"退職金・共済・育休制度が充実。安定感は最高レベルです",D:"地域密着のチームワークが醍醐味。長期的な関係構築ができます",E:"有給取得率が高く、育休後の復帰率も良好な傾向があります",F:"専門的な取り組みは限定的ですが、障害児保育の枠組みは整っています",G:"公立志向のあなたに最も適した環境。安定と地域貢献を両立できます" }},
+  { name:"認可保育園（私立）", icon:"🏠",
+    comments:{ A:"理念を持った法人なら自由保育の実践が可能。法人選びが重要です",B:"成長機会が多く、主任・副園長へのキャリアルートも開かれています",C:"処遇改善加算を活用した法人なら待遇面も期待できます",D:"職員の仲が良い園が多く、チームワークを発揮しやすい環境です",E:"ICT導入が進む法人なら業務効率も高め。残業が少ない傾向があります",F:"独自の専門プログラムを持つ法人もあり、専門性を活かせます",G:"民間ならではのスピード感が生じることも。制度面は公立に劣ることがあります" }},
+  { name:"認定こども園", icon:"🌈",
+    comments:{ A:"幼稚園的な理念保育と保育機能を兼ねた、自由度の高い環境です",B:"0〜5歳を担当するため幅広いキャリアを築けます",C:"制度が複雑な分、処遇も多様。法人による差が大きいです",D:"保育士・幼稚園教諭の混合チームで、多様な協力関係が生まれます",E:"行事が多い繁忙期の負荷に注意。ICT化も進んでいる園が増えています",F:"英語・音楽・体育などの専門プログラムを持つ園が多いです",G:"行政との連携が強い法人も多く、安定した運営が特徴です" }},
+  { name:"幼稚園", icon:"🎒",
+    comments:{ A:"独自の教育哲学を持つ幼稚園が多く、理念保育を実践しやすい環境です",B:"教育プログラムの開発やリーダー職へのキャリアが開かれています",C:"預かり保育の拡充で勤務時間は増加傾向。待遇面はばらつきがあります",D:"保護者との密な関係が特徴。コミュニケーション力が大いに活きます",E:"短時間勤務が可能な職場もあり、夏休みなどの長期休暇も魅力です",F:"音楽・英語・体操など専門的なプログラムを持つ園が多数あります",G:"地域の老舗幼稚園は安定感がある場合も多いです" }},
+  { name:"企業内保育所", icon:"🏢",
+    comments:{ A:"少人数で丁寧な保育ができます。自由度は企業方針次第です",B:"大企業のバックアップで福利厚生が充実。多様なポジションも期待できます",C:"大企業の施設なら福利厚生が非常に充実しています",D:"少人数のため密な人間関係が生まれます。小さなチームが好きな方向きです",E:"保護者が社員のため関係が安定。急な残業も比較的少ない傾向です",F:"専門プログラムの導入余地は施設により限られることが多いです",G:"公立ほどの安定感はありませんが、大企業内なら制度は充実しています" }},
+  { name:"小規模保育（0〜2歳）", icon:"👶",
+    comments:{ A:"少人数で一人ひとりと深く向き合える、乳児保育の醍醐味があります",B:"管理職ポストは少ないですが、乳児のスペシャリストとして深めるには好環境です",C:"処遇改善加算の適用あり。小規模ゆえの効率的な業務が魅力です",D:"密なチームワークが発揮できる環境。連携が直接結果につながります",E:"残業が少なく定時帰りしやすい傾向。シフトも比較的柔軟です",F:"乳児の発達専門家として深めるには最適な環境です",G:"地域型保育として行政との連携も強い施設が多いです" }},
+  { name:"障害児支援施設", icon:"🌟",
+    comments:{ A:"インクルーシブ保育の実践の場。子どもの個性を最大限に尊重する環境です",B:"専門資格（児童発達支援管理責任者など）取得でキャリアアップが可能です",C:"各種加算制度が多く、専門性を積めば待遇アップも見込めます",D:"OT・PT・STなど多職種チームでの連携が求められます",E:"支援計画作成など書類業務が多いですが、ICT化で効率化が進んでいます",F:"障害児支援の専門家として、ここが最大の活躍の場です",G:"行政・医療との連携が強い安定した施設が多いです" }},
+  { name:"病院内・医療型保育", icon:"🏥",
+    comments:{ A:"医療的ケア児への関わりは、理念的な深さが求められる環境です",B:"医療知識との組み合わせで希少な専門キャリアを築けます",C:"病院施設のため福利厚生・安定性は非常に高い水準です",D:"医療スタッフとの多職種連携が不可欠。調整力が大いに活きます",E:"病院の就業規則に準拠した制度で、安定した勤務が可能です",F:"医療型保育のスペシャリストとして唯一無二の存在になれます",G:"行政・医療との強固な連携。安定した制度の中で働けます" }}
+];
+
+/* =============================================
+   42通りの合体コメント（性格タイプ × 保育士タイプ）
+============================================= */
+const combinedComments = {
+  "1_A":"子どもの個性を引き出しながらチームもまとめられる稀有な存在。認定こども園や私立園のリーダー候補です。",
+  "1_B":"人を巻き込む力でキャリアを切り拓く、主任・園長としての素質が十分あります。",
+  "1_C":"温かい雰囲気を保ちながら安定した職場を求める、バランス感覚に優れた保育士です。",
+  "1_D":"チームワークと共感力が相乗効果を生む。職場の「核」となる存在感があります。",
+  "1_E":"自分のペースを保ちながら周囲と調和できる。企業内保育など安定した職場で輝きます。",
+  "1_F":"共感力と専門性が融合した障害児支援・医療型保育のエキスパート候補です。",
+  "1_G":"地域の子どもたちを長期的に支える、公立施設の核となる人材です。",
+  "2_A":"独自メソッドを深く探求する保育界の研究者型。少人数園での専門的な保育に最適です。",
+  "2_B":"専門性を武器にキャリアを積む。資格・研修でどこまでも伸びていくタイプです。",
+  "2_C":"誠実さと安定志向が一致。公立・企業内保育所での長期就業に向いています。",
+  "2_D":"専門知識をチームに還元できる先生的存在。後輩育成でも力を発揮します。",
+  "2_E":"仕事の質と生活バランスを両立する、持続可能な働き方ができる保育士です。",
+  "2_F":"最強の専門家型。障害児支援や医療型保育で高い専門性を発揮します。",
+  "2_G":"丁寧で誠実な保育を長く続ける、公立施設の信頼の柱となる存在です。",
+  "3_A":"深い見守り保育と優しいケア力が融合。少人数保育で最大限に輝きます。",
+  "3_B":"サポートしながら成長する共感型リーダー。チームの雰囲気を守りながら組織を伸ばします。",
+  "3_C":"穏やかで長く続けられる保育士。乳児施設や小規模保育での安定就業に向いています。",
+  "3_D":"チームのケアもできるサポーター。職員間の橋渡し役として重要な存在です。",
+  "3_E":"心の余裕を保ちながら丁寧なケアを続けられる。ワークライフバランス重視の施設が最適です。",
+  "3_F":"障害児・医療的ケア児への深い共感と専門性を兼ね備えたスペシャリストです。",
+  "3_G":"地域の子どもたちを温かく包む、公立施設の心の支えとなる保育士です。",
+  "4_A":"新しい保育哲学を現場で実践するパイオニア。インターナショナル系・新設園での活躍が期待されます。",
+  "4_B":"変化を恐れず上を目指す、保育界の次世代リーダー候補です。",
+  "4_C":"変化への意欲と安定志向がせめぎ合うタイプ。企業内保育所が良いバランスです。",
+  "4_D":"チームに新しい風を吹き込む存在。周囲を巻き込みながら革新を進める力があります。",
+  "4_E":"変化に強く働き方にも柔軟。企業内保育や新設施設での自由な働き方に最適です。",
+  "4_F":"STEAM・インクルーシブ保育など最先端分野で業界に新しい価値をもたらします。",
+  "4_G":"公立施設の中で改革を目指すチェンジメーカー。制度の壁と向き合う忍耐も必要です。",
+  "5_A":"計画的に理念保育を実践する誠実な保育士。保育ドキュメンテーションの質が光ります。",
+  "5_B":"着実にキャリアを積む長期視点の成長型保育士。研修・資格取得も計画的に進めます。",
+  "5_C":"最も安定志向。公立施設での長期勤務に最も向いており、揺るぎない基盤を築けます。",
+  "5_D":"規律あるチームプレーヤー。約束を守り、信頼される同僚として職場を支えます。",
+  "5_E":"決められたルールの中で効率よく働くタイプ。残業少なめの職場に向いています。",
+  "5_F":"専門資格を確実に取得し、着実にスペシャリストへの道を歩む保育士です。",
+  "5_G":"公立施設のための保育士像に最も近い。誠実に地域に貢献し続けます。",
+  "6_A":"柔軟な適応力で様々な保育哲学を吸収できる。どんな環境にも馴染みやすいです。",
+  "6_B":"バランスよく成長しながらキャリアを積む。急ぎすぎず着実に上を目指せます。",
+  "6_C":"安定した中でバランスよく働く。家庭と仕事を両立しながら長く続けられます。",
+  "6_D":"どんなチームにも溶け込める万能型。人間関係のトラブルが少ないです。",
+  "6_E":"様々な働き方に対応できる。ライフステージに合わせて柔軟にキャリアを変えられます。",
+  "6_F":"専門性を軸にしながらも偏りがない。総合力で勝負できる保育士です。",
+  "6_G":"安定した環境でバランスよく成長する。地域に根ざした長期キャリアが描けます。"
+};
+
+/* =============================================
+   ビッグファイブ特性データ
+============================================= */
+const bigFiveData = {
+  traits: [
+    {
+      name: "開放性", key: "O",
+      summary: "新しいことへの好奇心の強さ",
+      high: {
+        feature: "変化や新しい試みを好む。創造性・発想力が豊か。",
+        strength: "新しい保育活動や遊びを積極的に取り入れられる",
+        caution: "アイデア先行になりすぎず継続・定着を意識する"
+      },
+      low: {
+        feature: "慣れた環境・やり方を好む。安定・継続性を重視する。",
+        strength: "一貫した保育環境を維持し子どもに安心感を与えられる",
+        caution: "変化が必要な場面では柔軟な対応を心がける"
+      }
+    },
+    {
+      name: "誠実性", key: "C",
+      summary: "計画性と自己管理能力の高さ",
+      high: {
+        feature: "計画的・責任感が強く、ものごとをやり遂げる。規律・秩序を重んじる。",
+        strength: "保育計画を着実に実行し、記録・報告を丁寧にこなせる",
+        caution: "想定外の事態や子どものペースに対して柔軟さを保つ"
+      },
+      low: {
+        feature: "柔軟で臨機応変な対応が得意。計画より流れを重視する。",
+        strength: "子どもの自発的な活動や突発的な場面に柔軟に応じられる",
+        caution: "書類管理・スケジュール管理を意識的に習慣化する"
+      }
+    },
+    {
+      name: "外向性", key: "E",
+      summary: "他者との関わりから得るエネルギー量",
+      high: {
+        feature: "社交的で話すことを好む。集団の中で活力を感じやすい。",
+        strength: "子どもや保護者との関係構築が速く、場の雰囲気をつくりやすい",
+        caution: "内向的な子どもへの配慮を忘れず、静かな関わりも意識する"
+      },
+      low: {
+        feature: "一人の時間で充電し、落ち着いた関わりを好む。深い対話を重視する。",
+        strength: "個別の関わりを大切にし、内向的な子どもとの信頼関係を築きやすい",
+        caution: "集団活動や保護者対応での積極的な発信を意識的に行う"
+      }
+    },
+    {
+      name: "協調性", key: "A",
+      summary: "他者への共感・思いやりの傾向",
+      high: {
+        feature: "他者の感情に敏感で、協力・共感を大切にする。対立を避けようとする。",
+        strength: "子どもや保護者の気持ちに寄り添い、信頼関係を築きやすい",
+        caution: "対立を避けすぎることなく、必要な場面では明確な意思表示を行う"
+      },
+      low: {
+        feature: "自己主張が明確で、客観的・率直な判断を行いやすい。競争・議論に慣れている。",
+        strength: "子どもの問題行動に対して感情に流されず適切な対応ができる",
+        caution: "子どもや保護者への言葉・態度が直接的になりすぎないよう配慮する"
+      }
+    },
+    {
+      name: "安定性", key: "S",
+      summary: "感情の安定度・ストレス耐性の強さ",
+      high: {
+        feature: "情緒が安定しており、プレッシャーにも動じにくい。落ち着いた対応が得意。",
+        strength: "トラブルや緊急場面でも冷静に判断・行動し、周囲に安心感を与えられる",
+        caution: "他者の不安や感情的な訴えに対して、共感の姿勢を意識的に示す"
+      },
+      low: {
+        feature: "感情の変動が起きやすく、ストレスを感じやすい。不安・緊張を抱えやすい。",
+        strength: "危険や異変に対して敏感に気づき、リスクへの備えが丁寧になりやすい",
+        caution: "感情の波が保育の質に影響しないよう、自己調整の手段を持つ"
+      }
+    }
+  ],
+};
+
+/* =============================================
+   状態管理
+============================================= */
+let currentQ = 0;
+let answers  = new Array(25).fill(null);
+let chartPersonality = null;
+let chartWork = null;
+
+/* =============================================
+   スタート
+============================================= */
+function startDiagnosis() {
+  document.getElementById('screen-start').style.display = 'none';
+  document.getElementById('screen-question').style.display = 'block';
+  renderQ(0);
+}
+
+/* =============================================
+   設問描画
+============================================= */
+function renderQ(idx) {
+  const q = questions[idx];
+  const isPart1 = q.part === 1;
+
+  // パート切替バナー（Q11のみ表示）
+  const banner = document.getElementById('part-banner');
+  if (idx === 10) {
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="part-banner-title">🌱 Part 2 保育診断スタート</div><div class="part-banner-sub">ここからは保育観・働き方についての15問です</div>`;
+    setTimeout(() => { banner.style.display = 'none'; }, 2500);
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // バッジ
+  const tag = document.getElementById('axis-tag');
+  tag.textContent = q.axisLabel;
+  tag.className   = 'axis-tag ' + (isPart1 ? 'part1' : 'part2');
+
+  document.getElementById('q-num').textContent  = `Q${q.id}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('progress-text').textContent = `${idx + 1} / 25問`;
+  document.getElementById('progress-part').textContent  = isPart1 ? 'Part 1 性格診断' : 'Part 2 保育診断';
+
+  // プログレスバー
+  const fill = document.getElementById('progress-fill');
+  fill.style.width = Math.max((idx / 25) * 100, 4) + '%';
+  fill.className = 'progress-fill ' + (isPart1 ? 'part1' : '');
+
+  // スケールボタン
+  document.querySelectorAll('.scale-btn').forEach(btn => {
+    const selected = parseInt(btn.dataset.val) === answers[idx];
+    btn.className = 'scale-btn' + (selected ? (' selected' + (isPart1 ? ' part1' : '')) : '');
+  });
+
+  document.getElementById('btn-back').style.visibility = idx === 0 ? 'hidden' : 'visible';
+
+  const card = document.getElementById('q-card');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+/* =============================================
+   回答選択 → 自動で次へ
+============================================= */
+function selectAnswer(val) {
+  const isPart1 = questions[currentQ].part === 1;
+  answers[currentQ] = val;
+  document.querySelectorAll('.scale-btn').forEach(btn => {
+    const selected = parseInt(btn.dataset.val) === val;
+    btn.className = 'scale-btn' + (selected ? (' selected' + (isPart1 ? ' part1' : '')) : '');
+  });
+  setTimeout(() => nextQ(), 320);
+}
+
+function nextQ() {
+  const card = document.getElementById('q-card');
+  card.classList.add('fade-out');
+  setTimeout(() => {
+    card.classList.remove('fade-out');
+    if (currentQ < 24) { currentQ++; renderQ(currentQ); }
+    else { showResult(); }
+  }, 200);
+}
+
+function prevQ() {
+  if (currentQ === 0) return;
+  const card = document.getElementById('q-card');
+  card.classList.add('fade-out');
+  setTimeout(() => {
+    card.classList.remove('fade-out');
+    currentQ--;
+    renderQ(currentQ);
+  }, 200);
+}
+
+/* =============================================
+   性格スコア計算（各特性の平均, 1〜5スケール）
+============================================= */
+function calcPersonalityScores() {
+  const raw = { O:[], C:[], E:[], A:[], N:[] };
+  questions.slice(0, 10).forEach((q, i) => {
+    let v = answers[i];
+    if (q.reverse) v = 6 - v;
+    raw[q.pTrait].push(v);
+  });
+  const avg = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
+  return { O: avg(raw.O), C: avg(raw.C), E: avg(raw.E), A: avg(raw.A), S: avg(raw.N) };
+}
+
+/* =============================================
+   保育軸スコア計算（各軸の平均, 1〜5スケール）
+============================================= */
+function calcAxisScores() {
+  const raw = {1:[],2:[],3:[],4:[],5:[],6:[],7:[]};
+  questions.slice(10).forEach((q, i) => {
+    raw[q.axis].push(answers[i + 10]);
+  });
+  const scores = {};
+  for (let ax = 1; ax <= 7; ax++) {
+    scores[ax] = raw[ax].reduce((a,b) => a+b, 0) / raw[ax].length;
+  }
+  return scores;
+}
+
+/* =============================================
+   タイプ判定（ユークリッド距離）
+============================================= */
+function determinePersonalityType(ps) {
+  let best = personalityTypes[0], minD = Infinity;
+  personalityTypes.forEach(t => {
+    const ip = t.idealProfile;
+    const d = Math.sqrt(['O','C','E','A','S'].reduce((s,k) => s + Math.pow(ip[k] - ps[k], 2), 0));
+    if (d < minD) { minD = d; best = t; }
+  });
+  return best;
+}
+
+function determineWorkType(axisScores) {
+  let best = workTypes[0], minD = Infinity;
+  workTypes.forEach(t => {
+    const d = Math.sqrt(t.idealProfile.reduce((s, ideal, i) => s + Math.pow(ideal - axisScores[i+1], 2), 0));
+    if (d < minD) { minD = d; best = t; }
+  });
+  return best;
+}
+
+/* =============================================
+   結果表示
+============================================= */
+function showResult() {
+  document.getElementById('screen-question').style.display = 'none';
+  document.getElementById('screen-result').style.display  = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const pScores    = calcPersonalityScores();
+  const axisScores = calcAxisScores();
+  const pType      = determinePersonalityType(pScores);
+  const wType      = determineWorkType(axisScores);
+
+  // 合体タイプ表示
+  document.getElementById('r-ptype').textContent = `${pType.emoji} ${pType.name}`;
+  document.getElementById('r-wtype').textContent = `${wType.emoji} ${wType.name}`;
+  const comboKey = `${pType.id}_${wType.id}`;
+  document.getElementById('r-combined-comment').textContent =
+    combinedComments[comboKey] || `${pType.name}の強みと${wType.name}の特性が掛け合わさり、幅広い施設で活躍できる可能性を持っています。`;
+
+  // タグ（性格強み・保育強み・注意点）
+  const tagsEl = document.getElementById('r-tags');
+  tagsEl.innerHTML = '';
+  pType.strengths.forEach(s => addTag(tagsEl, '✦ ' + s, 'tag-p'));
+  wType.strengths.forEach(s => addTag(tagsEl, '✦ ' + s, 'tag-s'));
+  wType.cautions.forEach(c  => addTag(tagsEl, '⚠ ' + c,  'tag-c'));
+
+  drawPersonalityRadar(pScores);
+  drawWorkRadar(axisScores);
+  drawBigFiveDetail(pScores);
+  drawTop3(wType, pType, pScores, axisScores);
+}
+
+function addTag(parent, text, cls) {
+  const el = document.createElement('span');
+  el.className = 'tag ' + cls;
+  el.textContent = text;
+  parent.appendChild(el);
+}
+
+/* =============================================
+   性格レーダーチャート
+============================================= */
+function drawPersonalityRadar(ps) {
+  if (chartPersonality) chartPersonality.destroy();
+  const ctx = document.getElementById('personalityChart').getContext('2d');
+  const data = ['O','C','E','A','S'].map(k => Math.round((ps[k]-1)/4*100));
+  chartPersonality = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['開放性','誠実性','外向性','協調性','安定性'],
+      datasets: [{ data, backgroundColor:'rgba(155,112,212,0.18)', borderColor:'#9b70d4', borderWidth:2, pointBackgroundColor:'#9b70d4', pointBorderColor:'#fff', pointRadius:3 }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min:0, max:100, ticks:{ display:false }, grid:{ color:'rgba(0,0,0,0.07)' }, angleLines:{ color:'rgba(0,0,0,0.07)' }, pointLabels:{ font:{ size:10, family:'Noto Sans JP' }, color:'#666' } } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+}
+
+/* =============================================
+   保育観レーダーチャート
+============================================= */
+function drawWorkRadar(axisScores) {
+  if (chartWork) chartWork.destroy();
+  const ctx = document.getElementById('workChart').getContext('2d');
+  const labels = ['保育哲学','キャリア','給与待遇','職場環境','人間関係','専門分野','価値観'];
+  const data = [1,2,3,4,5,6,7].map(ax => Math.round((axisScores[ax]-1)/4*100));
+  chartWork = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor:'rgba(90,158,111,0.18)', borderColor:'#5a9e6f', borderWidth:2, pointBackgroundColor:'#5a9e6f', pointBorderColor:'#fff', pointRadius:3 }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min:0, max:100, ticks:{ display:false }, grid:{ color:'rgba(0,0,0,0.07)' }, angleLines:{ color:'rgba(0,0,0,0.07)' }, pointLabels:{ font:{ size:10, family:'Noto Sans JP' }, color:'#666' } } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+}
+
+/* =============================================
+   ビッグファイブ詳細カード
+============================================= */
+function drawBigFiveDetail(pScores) {
+  const container = document.getElementById('bf-list');
+  container.innerHTML = '';
+
+  bigFiveData.traits.forEach(trait => {
+    const score  = pScores[trait.key];
+    const isHigh = score >= 3;
+    const info   = isHigh ? trait.high : trait.low;
+    const pct    = Math.round((score - 1) / 4 * 100);
+
+    const card = document.createElement('div');
+    card.className = 'bf-card';
+    card.innerHTML = `
+      <div class="bf-header">
+        <span class="bf-name">${trait.name}</span>
+        <span class="bf-level ${isHigh ? 'high' : 'low'}">${isHigh ? '高め' : '低め'} ${pct}%</span>
+      </div>
+      <div class="bf-summary">${trait.summary}</div>
+      <div class="bf-feature">${info.feature}</div>
+      <div class="bf-row">
+        <div class="bf-tag strength">
+          <div class="bf-tag-label">✦ 強み</div>${info.strength}
+        </div>
+        <div class="bf-tag caution">
+          <div class="bf-tag-label">⚠ 注意点</div>${info.caution}
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+
+}
+
+/* =============================================
+   施設バー
+============================================= */
+
+/* =============================================
+   性格タイプ × 施設 推薦コメント（6タイプ × 8施設）
+   インデックス順: 0=公立 1=私立 2=認定こども園 3=幼稚園
+                  4=企業内 5=小規模 6=障害児 7=病院
+============================================= */
+const pFacilityReasons = {
+  "1": ["高い協調性と安定性が、公立施設の安定したチームワーク文化にマッチします",
+        "外向性と協調性の高さが、保護者対応や職員間の連携で力を発揮します",
+        "多様なニーズへの共感力が、0〜5歳の幅広い保育現場で活きます",
+        "保護者との強固な信頼関係を築く共感力が、幼稚園の密な関係性にフィットします",
+        "チームをまとめる力が、少人数の企業内保育所でリーダーシップを発揮させます",
+        "一人ひとりへの寄り添い方が、少人数ならではの深い関係構築につながります",
+        "高い協調性が、OT・PT・ST等との多職種チームで真価を発揮します",
+        "医療スタッフとの連携に欠かせない調整力・共感力が大いに活きます"],
+  "2": ["高い誠実性が、公立施設の厳格な書類管理・制度遵守で高く評価されます",
+        "探究心の高さが、法人独自のプログラムや研修制度が充実した施設に向いています",
+        "専門的な知識欲が、教育要領と保育指針の両方を学べる環境にマッチします",
+        "保育メソッドへの深い関心が、独自教育方針を重視する幼稚園の文化にフィットします",
+        "高い誠実性と専門性が、企業の研修・資格補助制度を最大限に活用できます",
+        "乳児発達への専門的な関心が、0〜2歳専門施設で最高の環境を生み出します",
+        "専門知識への探究心が、障害児支援の高度な専門スキル習得に直結します",
+        "丁寧で誠実な仕事ぶりが、医療水準の高い精度が求められる現場で信頼されます"],
+  "3": ["精神的安定性の高さが、安定した公立環境で子どもや保護者を長期的に支えます",
+        "思いやりの深さが、法人の理念に沿った温かい保育文化に自然に溶け込みます",
+        "幅広い年齢層への共感力が、0〜5歳対応の認定こども園で活きます",
+        "保護者との丁寧な関係構築が、送迎時の密なコミュニケーションが重要な幼稚園に向いています",
+        "落ち着いた対応力が、保護者が社員という安定した企業内環境でさらに輝きます",
+        "少人数への深い寄り添いが、一人ひとりを丁寧に見守る小規模保育で最大化されます",
+        "高い共感力と安定性が、感情的なサポートが必要な障害児・家族支援で力を発揮します",
+        "精神的安定感と思いやりが、医療環境の緊張感の中でも子どもを安心させる力になります"],
+  "4": ["変化への適応力が、近年ICT化・改革が進む公立施設でも十分活かせます",
+        "高い開放性が、新しい取り組みに積極的な法人での革新的な保育実践を後押しします",
+        "新しいメソッドへの好奇心が、多様な教育プログラムを持つ認定こども園に最適です",
+        "創造的なアイデアが、独自の教育方針を持つ幼稚園のプログラム開発で活かせます",
+        "エネルギッシュな革新志向が、企業ならではの新しい保育スタイルの開拓に向いています",
+        "新しい乳児保育へのアプローチの興味が、地域密着型の小規模施設で実験的に活かせます",
+        "インクルーシブ保育への強い関心が、障害児支援の最前線でイノベーションを生みます",
+        "医療保育という先端分野への挑戦心が、この特殊な環境での成長意欲につながります"],
+  "5": ["高い責任感と規則遵守の姿勢が、公立施設の制度・文化に完全にマッチします",
+        "計画的な仕事ぶりが、処遇改善加算を適切に活用する私立法人で評価されます",
+        "誠実な保育記録への取り組みが、認定こども園の保育の質向上に貢献します",
+        "着実に信頼を積み上げる姿勢が、地域の老舗幼稚園の文化に馴染みやすいです",
+        "高い信頼性が、企業内保育所での安定した職場運営に不可欠な要素となります",
+        "丁寧で安定した乳児ケアが、0〜2歳の繊細な発達段階に最適なアプローチです",
+        "責任感の強さが、個別支援計画の作成・実行に必要な細やかな対応力につながります",
+        "高精度で誠実な仕事ぶりが、医療水準が求められる病院内保育で信頼を得ます"],
+  "6": ["バランスの取れた特性が、様々な場面への対応が求められる公立施設に自然に馴染みます",
+        "総合力の高さが、多様な法人文化や保育スタイルへの適応を容易にします",
+        "均整の取れた資質が、保育と教育の両方の要素を持つ認定こども園に最適です",
+        "バランスの良い対応力が、保護者・子ども・行事など多方面の対応が必要な幼稚園に向いています",
+        "柔軟な適応力が、企業のカラーに染まりやすく職場に素早く溶け込めます",
+        "バランスの取れた保育力が、少人数でも多様なニーズに対応できる小規模保育に向いています",
+        "開放的で協調的な特性のバランスが、多職種連携の障害児支援現場でスムーズに機能します",
+        "全方位の対応力が、医療スタッフ・子ども・家族など多様な関係者との連携を助けます"]
+};
+
+/* =============================================
+   TOP3カード（理由付き）
+============================================= */
+function drawTop3(wType, pType, pScores, axisScores) {
+  const container = document.getElementById('top3');
+  container.innerHTML = '';
+
+  const top3 = facilities
+    .map((f, i) => ({ ...f, score: wType.facilityScores[i], origIndex: i }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  // 最高スコアの性格特性
+  const pTraitLabels = { O:'開放性', C:'誠実性', E:'外向性', A:'協調性', S:'安定性' };
+  const topPEntry = Object.entries(pScores).sort((a,b) => b[1]-a[1])[0];
+  const topPLabel = pTraitLabels[topPEntry[0]];
+  const topPScore = Math.round((topPEntry[1]-1)/4*100);
+
+  // 最高スコアの保育軸
+  const axisLabels = { 1:'保育哲学', 2:'キャリア志向', 3:'給与・待遇', 4:'職場環境', 5:'人間関係', 6:'専門分野', 7:'価値観・安定性' };
+  const topAxisEntry = Object.entries(axisScores).sort((a,b) => b[1]-a[1])[0];
+  const topAxisLabel = axisLabels[topAxisEntry[0]];
+  const topAxisScore = Math.round((topAxisEntry[1]-1)/4*100);
+
+  const ranks = ['🥇 1位', '🥈 2位', '🥉 3位'];
+
+  top3.forEach((f, i) => {
+    const stars = Math.round(f.score / 20);
+    const pReason  = pFacilityReasons[pType.id]?.[f.origIndex] ?? '';
+    const wReason  = f.comments[wType.id] ?? '';
+    const scoreNote = `あなたの「${topPLabel}」(${topPScore}点)と「${topAxisLabel}」(${topAxisScore}点)が特にこの施設との適性を高めています。`;
+
+    const card = document.createElement('div');
+    card.className = 'top-card';
+    card.innerHTML = `
+      <div class="top-rank">${ranks[i]}</div>
+      <div class="top-name">${f.icon} ${f.name}</div>
+      <div class="top-stars">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}
+        <span style="color:#aaa;font-size:12px">適性 ${f.score}%</span></div>
+      <div class="top-reasons">
+        <div class="top-reason r-personality">
+          <div class="top-reason-label">🧠 性格特性から</div>${pReason}
+        </div>
+        <div class="top-reason r-work">
+          <div class="top-reason-label">🌱 保育観から</div>${wReason}
+        </div>
+        <div class="top-reason r-score">
+          <div class="top-reason-label">📊 スコアから</div>${scoreNote}
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+/* =============================================
+   コピー
+============================================= */
+function copyResult() {
+  const pScores    = calcPersonalityScores();
+  const axisScores = calcAxisScores();
+  const pType      = determinePersonalityType(pScores);
+  const wType      = determineWorkType(axisScores);
+  const top3 = facilities.map((f,i) => ({ name:f.name, score:wType.facilityScores[i] })).sort((a,b) => b.score-a.score).slice(0,3).map((f,i) => `${i+1}位: ${f.name}（${f.score}%）`).join('\n');
+  const text = `【保育士 職場マッチング診断 結果】\n性格タイプ: ${pType.emoji} ${pType.name}\n保育士タイプ: ${wType.emoji} ${wType.name}\n\nおすすめ施設 TOP3:\n${top3}\n\n#保育士マッチング診断`;
+  navigator.clipboard.writeText(text).catch(() => { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }).finally(() => {
+    const msg = document.getElementById('copy-msg');
+    msg.textContent = 'コピーしました！';
+    setTimeout(() => msg.textContent = '', 3000);
+  });
+}
+
+/* =============================================
+   やり直し
+============================================= */
+function retake() {
+  answers  = new Array(25).fill(null);
+  currentQ = 0;
+  document.getElementById('screen-result').style.display   = 'none';
+  document.getElementById('screen-start').style.display    = 'block';
+  window.scrollTo({ top: 0 });
+}
+</script>
+</body>
+</html>
