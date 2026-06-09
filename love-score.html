@@ -161,27 +161,15 @@
     }
     .opt-btn.selected .opt-alpha { background: rgba(255,255,255,.25); }
 
-    .nav-row { display: flex; gap: 12px; }
     .btn-back {
       background: #fff; border: 2px solid #ddd;
-      color: var(--muted); padding: 12px 20px;
-      border-radius: 50px; font-size: 15px;
+      color: var(--muted); padding: 10px 20px;
+      border-radius: 50px; font-size: 14px;
       cursor: pointer; transition: border-color .2s, color .2s;
-      white-space: nowrap;
+      white-space: nowrap; align-self: flex-start;
     }
     .btn-back:hover { border-color: var(--primary); color: var(--primary); }
-    .btn-next {
-      flex: 1;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: #fff; border: none;
-      padding: 13px 0; border-radius: 50px;
-      font-size: 15px; font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(233,30,99,.3);
-      transition: opacity .2s, transform .2s;
-    }
-    .btn-next:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
-    .btn-next:not(:disabled):hover { transform: translateY(-1px); }
+    .back-row { display: flex; margin-top: 12px; }
 
     /* ── RESULT ── */
     .result-type-banner {
@@ -368,10 +356,8 @@
     </div>
 
     <div class="options" id="options-list"></div>
-
-    <div class="nav-row">
-      <button class="btn-back" onclick="prevQ()" id="btn-back">◀ 戻る</button>
-      <button class="btn-next" onclick="nextQ()" id="btn-next" disabled>次へ ▶</button>
+    <div class="back-row">
+      <button class="btn-back" id="btn-back" onclick="prevQ()" hidden>◀ 戻る</button>
     </div>
   </div>
 
@@ -914,9 +900,7 @@ function renderQ() {
     ol.appendChild(btn);
   });
 
-  document.getElementById('btn-back').style.visibility = currentQ === 0 ? 'hidden' : 'visible';
-  document.getElementById('btn-next').disabled = answers[currentQ] === null;
-  document.getElementById('btn-next').textContent = currentQ === 29 ? '結果を見る 🌸' : '次へ ▶';
+  document.getElementById('btn-back').hidden = currentQ === 0;
 }
 
 function selectOpt(i) {
@@ -924,7 +908,7 @@ function selectOpt(i) {
   document.querySelectorAll('.opt-btn').forEach((b, idx) => {
     b.classList.toggle('selected', idx === i);
   });
-  document.getElementById('btn-next').disabled = false;
+  setTimeout(() => nextQ(), 280);
 }
 
 function nextQ() {
