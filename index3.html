@@ -818,7 +818,7 @@
 
     </div><!-- /result-two-col -->
 
-    <!-- 深層10セクション -->
+    <!-- 深層7セクション -->
     <div id="deep-sections"></div>
 
     <!-- 適職・転職 -->
@@ -1311,7 +1311,7 @@ function calcLifePath(year, month, day) {
   return sum;
 }
 
-// ─── 深層10セクション描画 ────────────────────────────────────
+// ─── 深層7セクション描画 ────────────────────────────────────
 function deepItem(label, value, highlight) {
   return `<div class="deep-item${highlight?' highlight':''}"><div class="d-label">${label}</div><div class="d-value">${value}</div></div>`;
 }
@@ -1591,7 +1591,7 @@ function divinate() {
   document.getElementById('lifepath-keyword').textContent = lp.keyword;
   document.getElementById('lifepath-desc').textContent = lp.desc;
 
-  // ── 深層10セクション
+  // ── 深層7セクション
   renderDeepSections(ks);
 
   // ── 適職・転職
