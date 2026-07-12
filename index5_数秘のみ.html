@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数秘術占い・未来数と現在数</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700&display=swap');
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #f0d080;
+      --deep-purple: #1a0a2e;
+      --purple: #2d1b5e;
+      --purple-mid: #3d2580;
+      --star-white: #e8e0ff;
+      --text-light: #d4c8f0;
+      --accent-red: #c94c4c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Serif JP', 'Yu Mincho', serif;
+      background: var(--deep-purple);
+      color: var(--text-light);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 星空背景 */
+    #starfield {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: white;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      from { opacity: 0.2; transform: scale(0.8); }
+      to   { opacity: 1;   transform: scale(1.2); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+      border-bottom: 1px solid rgba(201,168,76,0.3);
+      margin-bottom: 2rem;
+    }
+    header .subtitle {
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold), #a07030);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.15em;
+      line-height: 1.3;
+    }
+    header .tagline {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: rgba(212,200,240,0.6);
+      letter-spacing: 0.2em;
+    }
+
+    /* 入力フォーム */
+    .form-card {
+      background: linear-gradient(135deg, rgba(45,27,94,0.8), rgba(26,10,46,0.9));
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(8px);
+    }
+    .form-card h2 {
+      text-align: center;
+      font-size: 1rem;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .field label {
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-light);
+    }
+    .field input, .field select {
+      background: rgba(61,37,128,0.5);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.6rem 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--gold);
+    }
+
+    .date-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .btn-divine {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #7a4f00, var(--gold), #a07030, var(--gold-light));
+      background-size: 200% 200%;
+      animation: shimmer 3s ease infinite;
+      border: none;
+      border-radius: 10px;
+      color: #1a0a00;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-divine:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(201,168,76,0.5);
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 結果エリア */
+    #result {
+      display: none;
+      animation: fadeIn 0.8s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .result-header .name-display {
+      font-size: 0.85rem;
+      color: var(--gold);
+      letter-spacing: 0.2em;
+      margin-bottom: 0.3rem;
+    }
+    .result-header .date-display {
+      font-size: 0.78rem;
+      color: rgba(212,200,240,0.6);
+    }
+
+    /* セクションカード */
+    .section-card {
+      background: linear-gradient(135deg, rgba(45,27,94,0.75), rgba(26,10,46,0.85));
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 16px;
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .section-card .section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+    .section-title .icon { font-size: 1.1rem; }
+
+    /* 特性グリッド */
+    .traits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-top: 1.2rem;
+    }
+    .trait-item {
+      background: rgba(61,37,128,0.3);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+    }
+    .trait-item .trait-label {
+      font-size: 0.68rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.2rem;
+    }
+    .trait-item .trait-value {
+      font-size: 0.85rem;
+    }
+
+    /* 数秘の数表示 */
+    .tensei-display {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .tensei-number {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 2px solid rgba(201,168,76,0.5);
+    }
+    .tensei-number .num {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+    .tensei-number .num-label {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.1em;
+    }
+    .tensei-info h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 0.3rem;
+    }
+    .tensei-info .tensei-keyword {
+      font-size: 0.8rem;
+      color: var(--gold);
+      letter-spacing: 0.2em;
+      margin-bottom: 0.6rem;
+    }
+    .tensei-info p {
+      font-size: 0.88rem;
+      line-height: 1.8;
+      color: var(--text-light);
+    }
+
+    .lifepath-emblem {
+      border-color: rgba(100,160,255,0.5) !important;
+      box-shadow: 0 0 16px rgba(100,160,255,0.15);
+    }
+    .lifepath-emblem .num { color: #9dcfff !important; }
+    .lifepath-emblem .num-label { color: rgba(157,207,255,0.7) !important; }
+
+    /* 適職・転職セクション */
+    .career-section { display: grid; gap: 0.85rem; }
+    .career-jobs {
+      background: rgba(61,37,128,0.25);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+    .career-jobs .cj-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+    }
+    .career-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .career-tag {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.35);
+      color: var(--gold-light);
+      letter-spacing: 0.05em;
+    }
+    .career-block {
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+    }
+    .career-block.strength {
+      background: linear-gradient(135deg, rgba(20,50,30,0.4), rgba(10,35,15,0.5));
+      border: 1px solid rgba(80,200,100,0.25);
+    }
+    .career-block.job-change {
+      background: linear-gradient(135deg, rgba(40,30,70,0.4), rgba(25,15,55,0.5));
+      border: 1px solid rgba(150,100,220,0.3);
+    }
+    .career-block .cb-header {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      margin-bottom: 0.55rem;
+    }
+    .career-block.strength  .cb-header { color: #80d890; }
+    .career-block.job-change .cb-header { color: #b090e8; }
+    .career-block .cb-text {
+      font-size: 0.87rem;
+      line-height: 1.85;
+      color: var(--text-light);
+    }
+
+    /* 恋活・婚活セクション */
+    .love-section {
+      display: grid;
+      gap: 0.85rem;
+    }
+    .love-block {
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+    }
+    .love-block.tendency {
+      background: linear-gradient(135deg, rgba(90,20,60,0.35), rgba(60,10,40,0.45));
+      border: 1px solid rgba(220,100,160,0.3);
+    }
+    .love-block.caution {
+      background: linear-gradient(135deg, rgba(80,40,10,0.35), rgba(60,20,5,0.45));
+      border: 1px solid rgba(220,150,60,0.3);
+    }
+    .love-block.mindset {
+      background: linear-gradient(135deg, rgba(20,60,80,0.35), rgba(10,40,60,0.45));
+      border: 1px solid rgba(80,180,220,0.3);
+    }
+    .love-block .lb-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      margin-bottom: 0.55rem;
+    }
+    .love-block.tendency .lb-header { color: #f0a0c0; }
+    .love-block.caution  .lb-header { color: #f0c060; }
+    .love-block.mindset  .lb-header { color: #80d0f0; }
+    .love-block .lb-text {
+      font-size: 0.87rem;
+      line-height: 1.85;
+      color: var(--text-light);
+    }
+
+    /* 生まれた日（誕生数）セクション */
+    .bday-section { display: grid; gap: 0.85rem; }
+    .bday-block {
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+    }
+    .bday-block .bb-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      margin-bottom: 0.55rem;
+    }
+    .bday-block .bb-text {
+      font-size: 0.87rem;
+      line-height: 1.85;
+      color: var(--text-light);
+    }
+    .bday-block .bb-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.65rem;
+    }
+    .bday-block.personality {
+      background: linear-gradient(135deg, rgba(60,20,80,0.35), rgba(40,10,60,0.45));
+      border: 1px solid rgba(180,120,220,0.3);
+    }
+    .bday-block.personality .bb-header { color: #c090e8; }
+    .bday-block.love-day {
+      background: linear-gradient(135deg, rgba(90,20,60,0.35), rgba(60,10,40,0.45));
+      border: 1px solid rgba(220,100,160,0.3);
+    }
+    .bday-block.love-day .bb-header { color: #f0a0c0; }
+    .bday-block.career-day {
+      background: linear-gradient(135deg, rgba(20,50,30,0.35), rgba(10,35,15,0.45));
+      border: 1px solid rgba(80,200,100,0.25);
+    }
+    .bday-block.career-day .bb-header { color: #80d890; }
+
+    footer {
+      text-align: left;
+      margin-top: 2.5rem;
+      font-size: 0.72rem;
+      color: rgba(212,200,240,0.4);
+      letter-spacing: 0.15em;
+      line-height: 2;
+    }
+
+    /* ── 深層読み セクション ── */
+    .deep-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(201,168,76,0.2);
+    }
+    .deep-section-title .sec-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.4);
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: var(--gold-light);
+    }
+    .deep-grid {
+      display: grid;
+      gap: 0.7rem;
+    }
+    .deep-grid.cols2 { grid-template-columns: 1fr 1fr; }
+    .deep-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+    .deep-item {
+      background: rgba(61,37,128,0.25);
+      border: 1px solid rgba(201,168,76,0.12);
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+    }
+    .deep-item .d-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      margin-bottom: 0.35rem;
+    }
+    .deep-item .d-value {
+      font-size: 0.84rem;
+      line-height: 1.75;
+      color: var(--text-light);
+    }
+    .deep-item.highlight {
+      border-color: rgba(201,168,76,0.4);
+      background: rgba(100,65,0,0.2);
+    }
+    .deep-item.highlight .d-value {
+      color: var(--gold-light);
+    }
+    .advice-box {
+      background: linear-gradient(135deg, rgba(30,60,20,0.4), rgba(20,40,10,0.5));
+      border: 1px solid rgba(80,180,80,0.3);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin-top: 0.5rem;
+    }
+    .advice-box .adv-step {
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-start;
+      margin-bottom: 0.6rem;
+    }
+    .advice-box .adv-step:last-child { margin-bottom: 0; }
+    .advice-box .adv-badge {
+      flex-shrink: 0;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      color: #80e080;
+      background: rgba(80,180,80,0.15);
+      border: 1px solid rgba(80,180,80,0.3);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      margin-top: 0.1rem;
+    }
+    .advice-box .adv-text {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text-light);
+    }
+
+    /* 結論カード */
+    .conclusion-card {
+      background: linear-gradient(135deg, rgba(60,30,10,0.55), rgba(40,15,5,0.65));
+      border: 2px solid rgba(201,168,76,0.7);
+      border-radius: 16px;
+      padding: 1.5rem 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 40px rgba(201,168,76,0.12);
+    }
+    .conclusion-title {
+      font-size: 0.72rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .conclusion-numbers {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .conclusion-num-item { text-align: center; }
+    .conclusion-num-item .cn-label {
+      font-size: 0.62rem;
+      color: rgba(212,200,240,0.65);
+      letter-spacing: 0.12em;
+      margin-bottom: 0.2rem;
+    }
+    .conclusion-num-item .cn-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    .conclusion-num-item .cn-type {
+      font-size: 0.68rem;
+      color: var(--gold-light);
+      letter-spacing: 0.05em;
+    }
+    .conclusion-divider {
+      border: none;
+      border-top: 1px solid rgba(201,168,76,0.25);
+      margin: 0.8rem auto;
+      width: 60%;
+    }
+    .conclusion-theme {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      letter-spacing: 0.08em;
+      padding: 0.45rem 1.2rem;
+      background: rgba(201,168,76,0.1);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    /* 2カラムレイアウト */
+    .result-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0;
+      align-items: start;
+    }
+    .result-two-col .section-card { margin-bottom: 1rem; }
+
+    /* ChatGPTエリア */
+    .chatgpt-area {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(20,25,60,0.7), rgba(15,15,45,0.8));
+      border: 1px solid rgba(120,140,255,0.35);
+      border-radius: 16px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .chatgpt-area .cgpt-icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
+    .chatgpt-area .cgpt-title {
+      font-size: 0.78rem;
+      letter-spacing: 0.25em;
+      color: #a0b0ff;
+      margin-bottom: 0.3rem;
+    }
+    .chatgpt-area .cgpt-desc {
+      font-size: 0.73rem;
+      color: rgba(212,200,240,0.55);
+      margin-bottom: 1rem;
+      line-height: 1.7;
+    }
+    .btn-chatgpt {
+      display: inline-block;
+      padding: 0.75rem 2.2rem;
+      background: linear-gradient(135deg, #3a4aaa, #6070ee, #3a4aaa);
+      background-size: 200% 200%;
+      animation: shimmer 3s ease infinite;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-chatgpt:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(100,120,255,0.45);
+    }
+    .copy-notice {
+      margin-top: 0.7rem;
+      font-size: 0.76rem;
+      color: #80e080;
+      opacity: 0;
+      transition: opacity 0.3s;
+      height: 1.2em;
+    }
+    .copy-notice.show { opacity: 1; }
+
+    @media (max-width: 600px) {
+      .result-two-col { grid-template-columns: 1fr; }
+      .conclusion-numbers { gap: 1.2rem; }
+    }
+
+    @media (max-width: 480px) {
+      .tensei-display { flex-direction: column; }
+      .traits-grid { grid-template-columns: 1fr; }
+      .deep-grid.cols3 { grid-template-columns: 1fr 1fr; }
+      .deep-grid.cols2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="starfield"></div>
+
+<div class="container">
+  <header>
+    <h1>◈ あなたの<br>数秘鑑定書 ◈</h1>
+    <p class="tagline">生年月日から導く、あなたの数秘鑑定書</p>
+  </header>
+
+  <!-- 入力フォーム -->
+  <div class="form-card">
+    <h2>◇ 生年月日を入力してください ◇</h2>
+    <div class="field-group">
+      <div class="field">
+        <label>生年月日</label>
+        <div class="date-row">
+          <div>
+            <select id="birthYear"></select>
+          </div>
+          <div>
+            <select id="birthMonth"></select>
+          </div>
+          <div>
+            <select id="birthDay"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-divine" onclick="divinate()">占 う</button>
+  </div>
+
+  <!-- 結果 -->
+  <div id="result">
+    <div class="result-header">
+      <div class="name-display" id="display-name"></div>
+      <div class="date-display" id="display-date"></div>
+    </div>
+
+    <!-- 結論（上部） -->
+    <div class="conclusion-card">
+      <div class="conclusion-title">◈ 数秘鑑定書　総括 ◈</div>
+      <div class="conclusion-numbers" id="conclusion-numbers"></div>
+      <hr class="conclusion-divider">
+      <div class="conclusion-theme" id="conclusion-theme"></div>
+    </div>
+
+    <!-- 2カラム: 左=未来数 / 右=現在数 -->
+    <div class="result-two-col">
+
+      <!-- 左カラム: 未来数 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon">◇</span>
+          <span>数 秘 術　未 来 数</span>
+        </div>
+        <div class="tensei-display">
+          <div class="tensei-number" id="tensei-emblem">
+            <div class="num" id="tensei-num"></div>
+            <div class="num-label">未来数</div>
+          </div>
+          <div class="tensei-info">
+            <h3 id="tensei-type"></h3>
+            <div class="tensei-keyword" id="tensei-keyword"></div>
+            <p id="tensei-desc"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右カラム: 現在数 -->
+      <div class="section-card">
+        <div class="section-title">
+          <span class="icon">◎</span>
+          <span>数 秘 術　現 在 数</span>
+        </div>
+        <div class="tensei-display">
+          <div class="tensei-number lifepath-emblem" id="lifepath-emblem">
+            <div class="num" id="lifepath-num"></div>
+            <div class="num-label">現在数</div>
+          </div>
+          <div class="tensei-info">
+            <h3 id="lifepath-type"></h3>
+            <div class="tensei-keyword" id="lifepath-keyword"></div>
+            <p id="lifepath-desc"></p>
+          </div>
+        </div>
+        <div class="traits-grid" id="traits-grid"></div>
+      </div>
+
+    </div><!-- /result-two-col -->
+
+    <!-- 誕生数（生まれた日）でわかること -->
+    <div class="section-card">
+      <div class="section-title">
+        <span class="icon">🗓</span>
+        <span>誕 生 数　生まれた日でわかること</span>
+      </div>
+      <div class="bday-section" id="bday-section"></div>
+    </div>
+
+    <!-- 深層7セクション（現在数を軸に展開） -->
+    <div id="deep-sections"></div>
+
+    <!-- 適職・転職 -->
+    <div class="section-card">
+      <div class="section-title">
+        <span class="icon">◎</span>
+        <span>適 職 ・ 転 職　あなたの仕事の天性</span>
+      </div>
+      <div class="career-section" id="career-section"></div>
+    </div>
+
+    <!-- 恋活・婚活 -->
+    <div class="section-card" id="love-katsu-card">
+      <div class="section-title">
+        <span class="icon">♡</span>
+        <span>恋 活 ・ 婚 活　あなたの愛の傾向</span>
+      </div>
+      <div class="love-section" id="love-katsu-section"></div>
+    </div>
+
+    <!-- ChatGPT 画像生成エリア -->
+    <div class="chatgpt-area">
+      <div class="cgpt-icon">✦</div>
+      <div class="cgpt-title">ChatGPT 画像生成プロンプト</div>
+      <div class="cgpt-desc">
+        ボタンを押してプロンプトをコピー → ChatGPT に貼り付けると<br>
+        占い結果の画像カードを生成できます
+      </div>
+      <button class="btn-chatgpt" onclick="copyForChatGPT()">プロンプトをコピー</button>
+      <div class="copy-notice" id="copy-notice">✓ コピーしました！　ChatGPT に貼り付けてください</div>
+    </div>
+
+  </div>
+
+  <footer>
+    本鑑定は統計的傾向に基づくものです。結果を保証するものではありません。
+  </footer>
+</div>
+
+<script>
+// ─── 星空生成 ───────────────────────────────────────────────
+(function(){
+  const sf = document.getElementById('starfield');
+  for(let i=0;i<140;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random()*2.5+0.5;
+    s.style.cssText = `
+      width:${sz}px;height:${sz}px;
+      top:${Math.random()*100}%;left:${Math.random()*100}%;
+      --dur:${(Math.random()*3+1.5).toFixed(1)}s;
+      animation-delay:${(Math.random()*3).toFixed(1)}s;
+      opacity:${Math.random()*0.5+0.2};
+    `;
+    sf.appendChild(s);
+  }
+})();
+
+// ─── セレクト初期化 ─────────────────────────────────────────
+(function(){
+  const yEl = document.getElementById('birthYear');
+  const mEl = document.getElementById('birthMonth');
+  const dEl = document.getElementById('birthDay');
+  const now = new Date();
+
+  for(let y=now.getFullYear(); y>=1920; y--){
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y + '年';
+    yEl.appendChild(o);
+  }
+  yEl.value = 1990;
+
+  for(let m=1; m<=12; m++){
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m + '月';
+    mEl.appendChild(o);
+  }
+  mEl.value = 1;
+
+  for(let d=1; d<=31; d++){
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d + '日';
+    dEl.appendChild(o);
+  }
+  dEl.value = 1;
+})();
+
+// ─── 数秘タイプデータ（未来数・現在数の基本情報／現在数の特性） ───────
+const TENSEI = {
+  1: {
+    type: '開拓者型', keyword: '◇ 先駆・独立・意志 ◇',
+    color: ['#4a2000','#7a3000'],
+    desc: '強い意志と独立心を持ち、先駆者として道を切り開きます。リーダーシップがあり、新しいことへの挑戦を恐れません。自分のビジョンを信じて突き進む力があります。',
+    traits: { '強み':'意志力・独立心・決断力', '弱み':'せっかち・頑固', '才能':'起業・リーダーシップ・新規開拓', '人生テーマ':'独立と協調の両立', '守護星':'☉ 太陽 — 自らの光で道を照らす、自己表現とリーダーシップの星' }
+  },
+  2: {
+    type: '調和者型', keyword: '◇ 協調・感受性・支援 ◇',
+    color: ['#002a3a','#004a5a'],
+    desc: '繊細な感受性と思いやりで人々をつなぐ天性があります。協調性が高く、チームの雰囲気を整えるのが得意。直感が鋭く、人の心の変化を敏感に察知します。',
+    traits: { '強み':'協調性・繊細さ・共感力', '弱み':'優柔不断・自己主張の弱さ', '才能':'サポート・カウンセリング・調整', '人生テーマ':'与えることと受け取ることの調和', '守護星':'☽ 月 — 感情の機微を映す、直感と共感の星' }
+  },
+  3: {
+    type: '表現者型', keyword: '◇ 創造・表現・喜び ◇',
+    color: ['#003a1a','#005a2a'],
+    desc: '豊かな創造性と表現力で周囲を明るく彩ります。コミュニケーション能力が高く、芸術・言語・創作方面に才能が花開きます。喜びを伝えることが使命です。',
+    traits: { '強み':'表現力・創造性・明るさ', '弱み':'気分屋・落ち着きのなさ', '才能':'創作・発信・エンターテインメント', '人生テーマ':'表現の喜びと継続力', '守護星':'♃ 木星 — 可能性を広げる、拡大と幸運の星' }
+  },
+  4: {
+    type: '建設者型', keyword: '◇ 誠実・堅実・秩序 ◇',
+    color: ['#2a1a00','#4a3000'],
+    desc: '誠実さと勤勉さで確かな土台を築く天性があります。計画的で実行力が高く、信頼を一つ一つ積み上げます。安定と秩序を重んじ、組織の基盤を支えます。',
+    traits: { '強み':'誠実さ・計画性・実行力', '弱み':'頑固・柔軟性の欠如', '才能':'構築・管理・仕組みづくり', '人生テーマ':'安定と変化への適応', '守護星':'♅ 天王星 — 独自の発想で築く、革新と秩序の星' }
+  },
+  5: {
+    type: '冒険者型', keyword: '◇ 自由・変化・多才 ◇',
+    color: ['#2a0a2a','#4a1a4a'],
+    desc: '自由と変化を愛し、様々な分野で才能を発揮する多才な人。好奇心旺盛で新しい経験から学ぶ力があります。束縛を嫌い、自分のペースで世界を広げていきます。',
+    traits: { '強み':'自由さ・好奇心・多才さ', '弱み':'飽きっぽさ・不安定さ', '才能':'多分野展開・冒険・変化への対応', '人生テーマ':'自由と責任の両立', '守護星':'☿ 水星 — 機敏に動き回る、知性と変化の星' }
+  },
+  6: {
+    type: '奉仕者型', keyword: '◇ 責任・愛・調和 ◇',
+    color: ['#1a003a','#2a006a'],
+    desc: '愛情深く責任感の強い、家族や共同体を守る天性があります。人の幸せに貢献することに喜びを見出し、面倒見の良さで周囲から頼られます。',
+    traits: { '強み':'愛情深さ・責任感・面倒見の良さ', '弱み':'過保護・自己犠牲', '才能':'育成・支援・調和づくり', '人生テーマ':'与える愛と自分を満たす愛の両立', '守護星':'♀ 金星 — 人と人を結ぶ、愛と調和の星' }
+  },
+  7: {
+    type: '探求者型', keyword: '◇ 智慧・分析・真実 ◇',
+    color: ['#003a3a','#005a5a'],
+    desc: '深く考え、真実を追求する知性の持ち主。分析力と直感力を兼ね備え、物事の本質を見抜きます。内省を大切にし、精神的な智慧を探求します。',
+    traits: { '強み':'洞察力・分析力・探究心', '弱み':'孤独になりやすい・内向的すぎる', '才能':'研究・専門性・精神性の探求', '人生テーマ':'知と心のつながり', '守護星':'♆ 海王星 — 見えない世界を映す、神秘と探求の星' }
+  },
+  8: {
+    type: '達成者型', keyword: '◇ 力・豊かさ・権威 ◇',
+    color: ['#2a1a00','#5a3500'],
+    desc: '目標達成への強いエネルギーと物質的豊かさを引き寄せる天性があります。現実的で決断力があり、ビジネスや組織運営で力を発揮します。',
+    traits: { '強み':'実行力・現実的判断・統率力', '弱み':'結果主義・冷徹に見られやすい', '才能':'事業構築・資産形成・組織運営', '人生テーマ':'豊かさと人間性の両立', '守護星':'♄ 土星 — 忍耐で築き上げる、責任と達成の星' }
+  },
+  9: {
+    type: '完成者型', keyword: '◇ 慈悲・理想・普遍 ◇',
+    color: ['#1a0a00','#3a2000'],
+    desc: '高い理想と深い慈悲心を持ち、人類や社会に貢献する使命を帯びています。芸術・哲学・精神的な分野に才能を発揮し、普遍的な愛を体現します。',
+    traits: { '強み':'包容力・理想の高さ・慈悲深さ', '弱み':'理想主義・燃え尽きやすさ', '才能':'社会貢献・国際関係・芸術', '人生テーマ':'理想と現実の橋渡し', '守護星':'♂ 火星 — 情熱を燃やし進む、行動と使命の星' }
+  },
+  11: {
+    type: '光の使者型', keyword: '◇ 啓示・直感・霊性 ◇',
+    color: ['#2a2a4a','#3a3a7a'],
+    desc: '高次の霊感と鋭い直感を持つマスターナンバーの持ち主。精神的な使命を感じ、人々を導く光となります。芸術や霊的な分野で非凡な才能を発揮します。',
+    traits: { '強み':'直感力・感受性・霊的な洞察', '弱み':'繊細すぎる・不安定になりやすい', '才能':'芸術・ヒーリング・精神的指導', '人生テーマ':'感受性を力に変える', '守護星':'☽✦ 月（高次） — 研ぎ澄まされた直感が輝く、覚醒の星' }
+  },
+  22: {
+    type: '建築家型', keyword: '◇ 大志・実現・奉仕 ◇',
+    color: ['#003a0a','#00601a'],
+    desc: '大きな夢を現実に変えるマスタービルダー。実践的な智慧で社会に貢献する大きなビジョンを持ちます。粘り強い努力で不可能を可能にする力があります。',
+    traits: { '強み':'実現力・構想力・忍耐力', '弱み':'プレッシャーに弱い・完璧主義', '才能':'大規模プロジェクト・組織構築', '人生テーマ':'理想を現実に築き上げる', '守護星':'♅✦ 天王星（高次） — 大きな構想を現実にする、マスタービルダーの星' }
+  },
+  33: {
+    type: '師範者型', keyword: '◇ 愛・教え・自己犠牲 ◇',
+    color: ['#2a003a','#4a006a'],
+    desc: '究極の愛と奉仕のマスターナンバー。人々を教え導く使命を持ち、純粋な愛で世界を癒します。芸術・教育・精神的指導者として大きな影響を与えます。',
+    traits: { '強み':'深い愛・教える力・献身性', '弱み':'自己犠牲・燃え尽き', '才能':'教育・ヒーリング・精神的指導', '人生テーマ':'与える愛と自分を満たす愛の両立', '守護星':'♀✦ 金星（高次） — 無条件の愛を体現する、慈愛の星' }
+  }
+};
+
+// ─── 深層データ（現在数＝ライフパスナンバーを軸に展開） ───────────
+const LIFE_DEEP = {
+  1: {
+    deep: {
+      relations: { fit:'5・8など意志の強い人と切磋琢磨できる関係。同じ熱量で高め合える', hard:'2・6など慎重すぎる人にブレーキをかけられると苛立ちやすい。相手のペースも尊重すると楽になる', love:'自分から動くタイプ。惹かれたら一直線に距離を縮めるが、対等な関係を意識することが長続きの鍵' },
+      phase: { now:'新しい道を切り開くスタートの時期。決断と行動が結果に直結するフェーズ', next:'築いた実績が認められ、周囲を導く立場へとステージが上がる', past:'一人で道を切り開いてきた経験が今の独立心とリーダーシップを育てた' },
+      talent: { how:'強い意志と決断力を活かして、新規事業や新しいプロジェクトの先頭に立つ', hidden:'発明・企画・起業といった「ゼロから作る」分野に眠る才能', env:'自分の裁量で決められる自由な環境、指示待ちのない現場' },
+      mind: { drop:'思うように進まないと苛立ち、周囲に強く当たってしまうことがある', belief:'「人に頼るのは弱さだ」という無意識の思い込み', up:'自分の判断で道を切り開けたと実感できた瞬間' },
+      advice: { do:'誰かに一つだけ相談してみる。一人で抱え込まない練習をする', avoid:'結果を急ぐあまり周囲を置き去りにすること', step:'今日、自分の計画を一つ誰かに話して意見をもらう' },
+      money: { income:'独立・起業・新規事業から生まれる収入との縁が強い', work:'経営者・起業家・新規開拓営業・プロジェクトリーダー', style:'自分がハンドルを握れる環境で最大限の力を発揮する' },
+      choice: { axis:'「これは自分が本当にやりたいことか？」', yesno:'心が前のめりになる方がYES' }
+    },
+    love_katsu: {
+      tendency: '出会ったら自分から動く積極派。まっすぐにアプローチし、スピード感のある恋愛を好む。恋活では主導権を握るのが得意。婚活では「一緒に人生を切り開けるパートナーか」を重視する。',
+      caution: '自分のペースを押し付けがちで、相手の気持ちを置き去りにすることがある。負けず嫌いな性格が衝突を招くことも。せっかちになりすぎず、相手の歩幅に合わせる意識を。',
+      mindset: '「引っ張る」だけでなく「委ねる」ことも関係を深める力になると知ること。相手の意見を受け止める余白を持つと、より対等で長続きする関係が築ける。'
+    },
+    career: {
+      suitable: ['経営者', '起業家', '新規事業開発', '営業職', 'プロジェクトマネージャー', 'スポーツ関連', 'コンサルタント', 'クリエイティブディレクター'],
+      strength: '強い意志と決断力で物事を前進させる力。ゼロから何かを立ち上げる場面で本領を発揮し、周囲を巻き込みながら道を切り開く。',
+      job_change: '「自分の裁量がない・成長が止まった」と感じたら転機のサイン。石橋を叩きすぎず、勝算が見えたら早めに動くタイプ。独立・起業が最も力を発揮できる選択肢になることも多い。'
+    }
+  },
+  2: {
+    deep: {
+      relations: { fit:'8・6など落ち着きと誠実さのある人と穏やかな信頼関係を築ける', hard:'1・5など自己主張の強い人に圧倒され、自分の意見を飲み込みがち。少しずつ主張する練習を', love:'そばで支えることで愛情を示す。安心できる相手とゆっくり関係を深めるタイプ' },
+      phase: { now:'周囲との調和を大切にしながら、静かに信頼を積み重ねている時期', next:'これまでの気配りが評価され、頼られる存在として役割が広がるステージ', past:'人の気持ちに寄り添ってきた経験が今の繊細な感受性と協調力を育てた' },
+      talent: { how:'相手の感情を敏感に察知する力を活かし、チームの潤滑油・調整役として輝く', hidden:'カウンセリング・ヒーリング・ペア仕事など「支える・寄り添う」分野の才能', env:'穏やかな人間関係のある職場、対立の少ない安定した環境' },
+      mind: { drop:'空気を読みすぎて自分の気持ちを後回しにし、静かに疲弊してしまう', belief:'「自分が我慢すれば丸くおさまる」という無意識の自己犠牲', up:'「あなたのおかげで助かった」という言葉に強く満たされる' },
+      advice: { do:'自分の希望を小さくてもいいので言葉にする練習をする', avoid:'全ての衝突を自分が引き受けて丸く収めようとすること', step:'今日、自分の意見を一つだけ誰かに伝えてみる' },
+      money: { income:'サポート業務・パートナーシップ・共同作業から安定した収入を得やすい', work:'アシスタント・秘書・カウンセラー・チームサポート職', style:'一人よりペアやチームで動くことでパフォーマンスが安定する' },
+      choice: { axis:'「これは相手だけでなく自分も心地よいか？」', yesno:'心がふっと軽くなる方がYES' }
+    },
+    love_katsu: {
+      tendency: '相手を思いやり、そっと支えることで愛情を伝えるタイプ。恋活では聞き上手な姿勢が好印象に。婚活では「安心して本音を出せるか」を最も重視し、穏やかな関係を望む。',
+      caution: '相手に合わせすぎて自分の意見や希望が見えなくなることがある。察してもらうことを期待しすぎて、気持ちがすれ違うケースも。',
+      mindset: '「察してもらう」より「言葉にして伝える」を意識すること。自分の希望を伝えても関係は壊れないと知ることで、より対等で安心できる愛が育つ。'
+    },
+    career: {
+      suitable: ['カウンセラー', '秘書・アシスタント', '医療・福祉', '人事', 'コーディネーター', 'チームサポート職', '教育・保育', 'コミュニティマネージャー'],
+      strength: '相手の気持ちを察する繊細な感受性とチームを支える調整力。裏方として組織やチームの雰囲気を安定させる力がある。',
+      job_change: '「自分ばかり我慢している」という感覚が積み重なったら転機のサイン。信頼できる人に相談しながら、焦らず着実に次のステップを見つけると吉。'
+    }
+  },
+  3: {
+    deep: {
+      relations: { fit:'1・5など明確なビジョンを持つ人と組むと表現力が最大限に開花する', hard:'4・8など慎重で堅実すぎる人にペースを乱されがち。テンポの違いを理解して付き合う', love:'感情表現が豊かで場を明るくする。楽しい会話から自然と距離が縮まるタイプ' },
+      phase: { now:'自分らしさを表現することが結果に直結する、発信力が輝く時期', next:'表現してきたものが評価され、人前に立つ機会が増えるステージ', past:'素直に感情を表現してきた経験が今の豊かな表現力とコミュニケーション力を育てた' },
+      talent: { how:'言葉・アイデア・表情の豊かさを活かして、人を惹きつける表現者として輝く', hidden:'執筆・パフォーマンス・SNS発信など「伝える」分野に眠る才能', env:'自由な発想が歓迎される、明るく開かれた環境' },
+      mind: { drop:'注目されないと感じると急に元気がなくなり、自信を失いやすい', belief:'「楽しませられなければ価値がない」という無意識の思い込み', up:'自分の表現に「面白い」「素敵」と反応をもらえた瞬間' },
+      advice: { do:'今日感じたことを言葉や形にして誰かと共有する', avoid:'気分の浮き沈みをそのまま態度に出してしまうこと', step:'今日、自分のアイデアを一つ誰かに話してみる' },
+      money: { income:'発信・創作・企画・コンテンツから収入が生まれやすい', work:'クリエイター・企画職・広報・エンターテイナー', style:'自分のセンスを活かせる自由度の高い働き方が力を発揮する' },
+      choice: { axis:'「これは自分の心が弾むか？」', yesno:'ワクワクして声に出したくなる方がYES' }
+    },
+    love_katsu: {
+      tendency: '明るく楽しい会話で距離を縮めるのが得意。恋活では自然と注目を集めやすい。婚活では「一緒にいて笑い合えるか」を重視し、感情を素直に表現し合える関係を望む。',
+      caution: '気分の波が関係に出やすく、相手を戸惑わせることがある。楽しさを優先しすぎて、深い話し合いを避けてしまう傾向にも注意。',
+      mindset: '楽しい時間だけでなく、本音を話す時間も大切にすること。感情の波を相手と共有できると、表面的でない深いつながりが育つ。'
+    },
+    career: {
+      suitable: ['クリエイター', '広報・PR', 'ライター', 'タレント・司会業', 'イベント企画', 'マーケター', 'デザイナー', '教育・講師業'],
+      strength: '豊かな表現力と場を明るくする力。人を惹きつけるアイデアと発信力で、企画・創作の分野で本領を発揮する。',
+      job_change: '「表現の場がない・つまらない」と感じたら転機のサイン。勢いだけで動かず、自分の表現を活かせる場かを基準に選ぶと長続きする。'
+    }
+  },
+  4: {
+    deep: {
+      relations: { fit:'8・6など計画性のある誠実な人と着実な信頼関係を築ける', hard:'3・5など衝動的で予測不能な人に振り回されやすい。ペースを守る意識を', love:'時間をかけて信頼を積み上げる誠実なタイプ。安定を最優先に関係を築く' },
+      phase: { now:'基礎を固め、着実に積み上げていくことが実を結ぶ堅実な時期', next:'積み重ねてきた実績が信頼となり、責任ある立場を任されるステージ', past:'コツコツ努力を積み重ねてきた経験が今の誠実さと実行力を育てた' },
+      talent: { how:'計画性と実行力を活かし、組織やプロジェクトの土台を作る役割で輝く', hidden:'設計・建築・経理・システム構築など「仕組みを作る」分野の才能', env:'ルールと秩序が明確で、努力が正当に評価される環境' },
+      mind: { drop:'計画が崩れると強い不安を感じ、立て直しに時間がかかる', belief:'「間違いは許されない」という無意識の完璧主義', up:'コツコツ積み上げてきたものが形になった瞬間の達成感' },
+      advice: { do:'計画が崩れても修正すればいいと自分に許可を出す', avoid:'予定外の変化を全て悪いものと決めつけること', step:'今日、いつもと違うやり方を一つだけ試してみる' },
+      money: { income:'堅実な積み立てと長期的な実績から着実に収入が増えるタイプ', work:'経理・総務・エンジニア・建築・プロジェクト管理', style:'ルーティンと目標が明確な職場で安定して力を発揮する' },
+      choice: { axis:'「これは着実に積み上げられる選択か？」', yesno:'腹落ちして安心できる方がYES' }
+    },
+    love_katsu: {
+      tendency: '時間をかけて信頼を積み上げる誠実なタイプ。恋活では焦らず段階を踏んで関係を深める。婚活では生活の安定性や価値観の一致を重視し、堅実な将来設計を一緒に描ける相手を求める。',
+      caution: '慎重になりすぎてアプローチが遅れ、チャンスを逃すことがある。計画通りに進まないと不安になり、柔軟な対応が苦手な面も。',
+      mindset: '「完璧な計画がなくても関係は育つ」と知ること。小さな一歩を踏み出す勇気が、誠実さという強みをより輝かせる。'
+    },
+    career: {
+      suitable: ['経理・財務', 'エンジニア', '建築・設計', '総務・管理部門', 'プロジェクトマネージャー', '公務員', '品質管理', '事務職'],
+      strength: '計画性と着実な実行力。地道な積み重ねで確かな成果を出し、組織の土台を支える信頼される存在になれる。',
+      job_change: '「積み上げてきたものが評価されない」と感じたら転機のサイン。衝動的に動かず、次の環境の安定性と将来性をしっかり見極めてから動くと吉。'
+    }
+  },
+  5: {
+    deep: {
+      relations: { fit:'3・7など変化や刺激を楽しめる人と自由な関係を築ける', hard:'4・6など型にはめようとする人には息苦しさを感じやすい。自由を尊重してもらえる相手を選ぶ', love:'束縛を嫌い、自由な関係を好む。刺激と変化のある恋愛にワクワクするタイプ' },
+      phase: { now:'様々な経験を通じて視野を広げる、変化と学びの多い時期', next:'積み重ねた経験が統合され、独自のスタイルとして確立するステージ', past:'多様な経験を積んできたことが今の柔軟性と適応力を育てた' },
+      talent: { how:'好奇心と多才さを活かし、複数の分野を横断するマルチプレイヤーとして輝く', hidden:'旅・語学・多分野を組み合わせた新しい価値創造の才能', env:'自由度が高く、新しいことに挑戦できる変化のある環境' },
+      mind: { drop:'同じことの繰り返しが続くと急に息苦しさを感じてしまう', belief:'「一つに縛られたら自分らしさを失う」という無意識の恐れ', up:'新しい場所・人・経験に触れた瞬間に気持ちが一気に高まる' },
+      advice: { do:'興味のあることを一つ、今日から小さく始めてみる', avoid:'飽きたからといって全てを投げ出してしまうこと', step:'今日、いつもと違う道を通ってみる、新しいことを一つ試す' },
+      money: { income:'複数の収入源・副業・多角的な活動から収入が生まれやすい', work:'フリーランス・複業・旅関連・語学関連の仕事', style:'一つの場所に縛られない自由な働き方でポテンシャルが開花する' },
+      choice: { axis:'「これは自分の自由を広げるか、狭めるか？」', yesno:'ワクワクして視界が開ける感覚がYES' }
+    },
+    love_katsu: {
+      tendency: '自由な関係性を好み、束縛を嫌う。恋活では刺激的で新鮮な出会いに惹かれやすい。婚活では「お互いの自由を尊重できるか」を重視し、型にはまらないパートナーシップを求める。',
+      caution: '飽きっぽさから関係が長続きしないことがある。相手を束縛と感じてしまい、距離を置きすぎて誤解を招くことも。',
+      mindset: '「自由」と「無責任」は違うと理解すること。自由を尊重し合いながらも、関係を育てる継続力を持つことで、豊かなパートナーシップが築ける。'
+    },
+    career: {
+      suitable: ['フリーランス', '旅行・観光業', '語学関連', 'マーケティング', 'ジャーナリスト', 'イベント関連', 'IT・Web関連', '複業・パラレルワーカー'],
+      strength: '好奇心旺盛で多才な適応力。複数の分野を横断しながら新しい価値を生み出す発想力が最大の武器になる。',
+      job_change: '「飽きた・視野が狭まった」と感じたら転機のサイン。ただし継続力も評価対象なので、まず今の場所でやり切ったかを一度振り返るとよい。'
+    }
+  },
+  6: {
+    deep: {
+      relations: { fit:'2・4など思いやりのある人と温かい家庭的な関係を築ける', hard:'8・1など自己中心的に見える人にストレスを感じやすい。線引きを意識する', love:'愛情深く、家庭的な安心感を大切にする。相手を守り支える一途なタイプ' },
+      phase: { now:'大切な人やコミュニティを支えることに力を注ぐ、愛情深い時期', next:'これまでの献身が信頼となり、家族やチームの中心的存在になるステージ', past:'誰かを支えてきた経験が今の面倒見の良さと責任感を育てた' },
+      talent: { how:'愛情深さと責任感を活かし、家庭・チーム・コミュニティを支える中心的な役割で輝く', hidden:'育児・教育・医療・福祉など「守り育てる」分野に眠る才能', env:'温かい人間関係があり、役割と責任が明確な環境' },
+      mind: { drop:'大切な人の力になれないと感じると強い無力感に襲われる', belief:'「自分が守らなければ」という無意識の重い責任感', up:'大切な人から「ありがとう、助かった」と言われた瞬間' },
+      advice: { do:'自分自身のケアの時間を意識的にスケジュールに入れる', avoid:'全ての責任を一人で背負い込もうとすること', step:'今日、誰かに小さな手助けをお願いしてみる' },
+      money: { income:'家族・チームのための安定志向の働き方から着実な収入を得る', work:'教育・医療・福祉・家族経営・コミュニティ運営', style:'役割と責任が明確な、人とのつながりが深い職場で力を発揮する' },
+      choice: { axis:'「これは大切な人たちにとっても良い選択か？」', yesno:'心が温かくなる方がYES' }
+    },
+    love_katsu: {
+      tendency: '相手を守り支えることに深い喜びを感じる、愛情深く一途なタイプ。恋活では誠実な姿勢が信頼を生む。婚活では家庭を築くビジョンを共有できるかを重視し、安定した愛を育てたいと願う。',
+      caution: '尽くしすぎて自分の時間や気持ちを後回しにしがち。相手を管理・心配しすぎて、重たく感じさせてしまうこともある。',
+      mindset: '「守る」だけでなく「委ねる」バランスを意識すること。自分自身も満たされることが、より健やかで長続きする愛情関係を育てる。'
+    },
+    career: {
+      suitable: ['教育・保育', '医療・看護', '福祉・介護', '人事・労務', '家族経営', 'コミュニティ運営', 'カスタマーサポート', 'コーチング'],
+      strength: '深い愛情と責任感で、人やチームを支える力。信頼される存在として、家庭的な温かさを組織にもたらすことができる。',
+      job_change: '「誰かの役に立てていない」と感じたら転機のサイン。周囲への責任感から動きにくいこともあるが、自分自身の幸せも大切にして選ぶと吉。'
+    }
+  },
+  7: {
+    deep: {
+      relations: { fit:'1・9など深く知的な対話ができる人と精神的なつながりを築ける', hard:'7・3など賑やかで表面的なやり取りが続く関係に疲れやすい', love:'表面的な関係より精神的な深いつながりを求める。時間をかけて心を開くタイプ' },
+      phase: { now:'内面を深く探求し、真実を見極めようとする内省的な時期', next:'探求してきた知恵が形になり、専門性として社会に認められるステージ', past:'一人静かに考え抜いてきた時間が今の深い洞察力を育てた' },
+      talent: { how:'深い分析力と直感を組み合わせ、専門分野を極める研究者的な立場で輝く', hidden:'哲学・心理学・スピリチュアルなど「本質を探る」分野の才能', env:'静かで自分のペースを保てる、一人の時間が確保できる環境' },
+      mind: { drop:'表面的な会話や浅い人間関係が続くと孤独感が強まる', belief:'「誰にも本当には理解されない」という無意識の孤独感', up:'自分の探求してきたことが誰かの深い共感を呼んだ瞬間' },
+      advice: { do:'自分の考えを言葉にして少しずつ外に出す練習をする', avoid:'一人で答えを出そうとして孤立を深めること', step:'今日、信頼できる人に自分の考えを一つ話してみる' },
+      money: { income:'専門知識・研究・資格などの積み重ねから安定した収入が生まれる', work:'研究職・専門職・分析職・スピリチュアル関連', style:'静かに集中できる環境で、専門性を深める働き方が力を発揮する' },
+      choice: { axis:'「これは自分の探求心が納得する選択か？」', yesno:'静かに心が澄む感覚がYES' }
+    },
+    love_katsu: {
+      tendency: '表面的な関係より精神的な深いつながりを求める。恋活では焦らず相手の内面をじっくり見極める。婚活では知的な対話と価値観の一致を最優先に考え、静かで深い絆を望む。',
+      caution: '心を開くまでに時間がかかり、相手に距離を感じさせてしまうことがある。分析しすぎて感情表現が乏しくなることも。',
+      mindset: '「分析」だけでなく「感じる」時間も大切にすること。少しずつ心の内を言葉にすることで、望む深いつながりが現実のものになる。'
+    },
+    career: {
+      suitable: ['研究職', '専門職・アナリスト', '心理カウンセラー', '大学教員', 'エンジニア', '編集者・作家', 'IT専門職', 'スピリチュアルカウンセラー'],
+      strength: '深い分析力と探求心。物事の本質を見抜く力で、専門性を極める分野において唯一無二の存在になれる。',
+      job_change: '「知的好奇心が満たされない」と感じたら転機のサイン。焦らず情報を集め、自分の専門性が深められる場所かどうかを基準に選ぶと吉。'
+    }
+  },
+  8: {
+    deep: {
+      relations: { fit:'1・4など目標達成を後押ししてくれる人と力強い協力関係を築ける', hard:'2・7など曖昧な態度に苛立ちを感じやすい。明確なコミュニケーションを心がける', love:'結果と成長を重視する。頼れるパートナーとして関係を主導するタイプ' },
+      phase: { now:'目標に向けてエネルギーを集中させ、結果を出すことに集中する時期', next:'これまでの努力が実を結び、豊かさと評価が形になるステージ', past:'目標を追い続けてきた経験が今の決断力と実行力を育てた' },
+      talent: { how:'強い目標達成力と現実的な判断力を活かし、事業や組織を成長させる役割で輝く', hidden:'資産形成・投資・スケールの大きなビジネス構築の才能', env:'成果が正当に評価され、裁量を持って動ける環境' },
+      mind: { drop:'結果が出ないと自分の価値まで否定されたように感じてしまう', belief:'「成功しなければ価値がない」という無意識のプレッシャー', up:'目標を達成し、周囲から評価された瞬間の高揚感' },
+      advice: { do:'結果だけでなくプロセスの努力も自分で認めてあげる', avoid:'数字や結果だけを基準に自分や他人を評価しすぎること', step:'今日、結果に関わらず頑張ったことを一つ自分で褒める' },
+      money: { income:'事業・投資・成果報酬から大きなリターンを得やすいタイプ', work:'経営・営業・投資・プロジェクト責任者', style:'目標と裁量が明確な環境で最大限のパフォーマンスを発揮する' },
+      choice: { axis:'「これは長期的な成長と豊かさにつながるか？」', yesno:'確信を持って前に進める方がYES' }
+    },
+    love_katsu: {
+      tendency: '頼れる存在として関係を主導するタイプ。恋活では自信と実行力が魅力になる。婚活では将来設計や経済的な安定性を重視し、共に成長できるパートナーを求める。',
+      caution: '結果や条件を重視しすぎて、感情的なつながりを後回しにしがち。忙しさから関係のケアが不足することもある。',
+      mindset: '「成果」だけでなく「一緒に過ごす時間の質」も愛情の証だと意識すること。効率だけでなく余白を持つことで、関係がより豊かになる。'
+    },
+    career: {
+      suitable: ['経営者', '投資家', '営業責任者', 'プロジェクトマネージャー', '不動産業', '金融業', 'コンサルタント', '事業開発'],
+      strength: '目標達成への強い意志と現実的な判断力。事業やプロジェクトを大きく成長させる実行力で、組織に豊かさをもたらす。',
+      job_change: '「成長が頭打ちになった」と感じたら転機のサイン。感情より数字とデータで判断する傾向を活かし、次の環境の成長性を見極めてから動くと吉。'
+    }
+  },
+  9: {
+    deep: {
+      relations: { fit:'3・6など理想や志を共有できる人と深い絆を築ける', hard:'1・8など現実的すぎる人とは価値観のズレを感じやすい。理解し合う対話を大切に', love:'広い視野と理想を持ち、無条件の愛を大切にする。相手の成長も願う包容力のあるタイプ' },
+      phase: { now:'これまでの経験を統合し、より大きな視点で人生を見つめる完成の時期', next:'積み重ねてきた理想と経験が、社会や人々への貢献として結実するステージ', past:'様々な経験を経てきたことが今の深い包容力と普遍的な視点を育てた' },
+      talent: { how:'広い視野と慈悲深さを活かし、社会貢献や人を導く役割で輝く', hidden:'芸術・哲学・国際的な分野など「普遍的な価値」に関わる才能', env:'多様な価値観が尊重され、大きなビジョンを描ける環境' },
+      mind: { drop:'理想と現実のギャップに直面すると深い無力感を覚える', belief:'「全ての人を救わなければ」という無意識の重すぎる使命感', up:'自分の行動が誰かの人生に良い影響を与えたと実感できた瞬間' },
+      advice: { do:'大きな理想の前に、目の前の小さな一歩を大切にする', avoid:'全てを一人で背負い込み燃え尽きてしまうこと', step:'今日、身近な誰か一人のために小さな親切を一つする' },
+      money: { income:'社会貢献・国際的な活動・広い人脈から巡り巡って収入が生まれる', work:'国際関連・非営利団体・芸術・教育・コンサルタント', style:'意義を感じられる仕事に取り組むことでエネルギーが持続する' },
+      choice: { axis:'「これは自分と周囲、両方の幸せにつながるか？」', yesno:'心が広がるように感じる方がYES' }
+    },
+    love_katsu: {
+      tendency: '広い心で相手を受け入れ、無条件の愛を大切にするタイプ。恋活では包容力が魅力になる。婚活では価値観や人生の理想を共有できるかを重視し、共に成長できる関係を望む。',
+      caution: '理想が高く、現実の相手とのギャップに失望しやすい。広い視野ゆえに一人の相手に集中しきれないと感じることも。',
+      mindset: '「完璧な相手」を探すのではなく「共に育てる愛」を意識すること。目の前の相手との今この瞬間を大切にすることで、理想に近づく関係が育っていく。'
+    },
+    career: {
+      suitable: ['国際関連職', '非営利団体', '芸術・文化関連', '教育者', 'コンサルタント', 'ジャーナリスト', '通訳・翻訳', 'ソーシャルワーカー'],
+      strength: '広い視野と深い慈悲心。多様な価値観をつなぎ、社会や組織に普遍的な価値をもたらす力がある。',
+      job_change: '「理想と現実のズレ」を感じ続けたら転機のサイン。理想を追いすぎて疲弊する前に、小さくても意義を感じられる場所を選ぶと長続きする。'
+    }
+  },
+  11: {
+    deep: {
+      relations: { fit:'7・9など精神性の高い人と深く共鳴し合える', hard:'4・8など現実重視の人とは価値観のズレを感じやすい。地に足をつけた対話を心がける', love:'直感で相手の本質を見抜く。魂レベルで惹かれ合うような深い縁を求めるタイプ' },
+      phase: { now:'直感と感受性が研ぎ澄まされ、周囲に大きな影響を与えられる敏感な時期', next:'磨いてきた感性が具体的な形となり、人々を導く役割が明確になるステージ', past:'人一倍繊細に世界を感じてきた経験が今の鋭い直感と共感力を育てた' },
+      talent: { how:'鋭い直感とインスピレーションを活かし、人々の心を動かす表現・発信で輝く', hidden:'スピリチュアル・ヒーリング・芸術など目に見えないものを扱う才能', env:'静けさと感性が尊重される、繊細さを否定されない環境' },
+      mind: { drop:'周囲のエネルギーを敏感に受け取りすぎて、原因不明の疲労を感じやすい', belief:'「人と違う自分はおかしいのでは」という無意識の孤独感', up:'自分の直感やひらめきが誰かの人生を照らした瞬間' },
+      advice: { do:'一人でエネルギーを整える時間を毎日意識的に確保する', avoid:'繊細さを恥じて自分の感覚を無視し続けること', step:'今日、感じたインスピレーションを一つ形にしてみる' },
+      money: { income:'直感を活かした発信・創作・スピリチュアル関連から収入が生まれやすい', work:'ヒーラー・アーティスト・カウンセラー・スピリチュアル関連', style:'静かに自分の感性と向き合える環境でパフォーマンスが最大化する' },
+      choice: { axis:'「心が落ち着いているときに、これでいいと思えるか？」', yesno:'体がふっと軽くなる感覚がYES' }
+    },
+    love_katsu: {
+      tendency: '直感で相手の本質を見抜き、魂で惹かれ合うような深い縁を求める。恋活では表面的な条件より「感じるもの」を重視する。婚活では精神的な深いつながりを最優先に考える。',
+      caution: '感受性が強く、相手の些細な言動に大きく揺さぶられることがある。理想が高く、繊細さゆえに関係が長続きしにくいことも。',
+      mindset: '「感じすぎる自分」を否定せず、それを才能として受け入れること。心を開いて素直に伝える練習が、深い縁をより現実的な関係へと育てる。'
+    },
+    career: {
+      suitable: ['アーティスト', 'ヒーラー・セラピスト', 'スピリチュアルカウンセラー', '作家・詩人', '音楽関連', '教育者', 'デザイナー', 'コーチ'],
+      strength: '鋭い直感とインスピレーション。人の心を深く動かす表現力で、目に見えない価値を形にする力がある。',
+      job_change: '「自分の感性を押し殺している」と感じたら転機のサイン。周囲の目より自分の内なる声を優先して選ぶと、本来の力が開花する。'
+    }
+  },
+  22: {
+    deep: {
+      relations: { fit:'4・8など現実的な実行力を持つ人と大きなビジョンを共に実現できる', hard:'3・5など気分やペースが変わりやすい人には計画を乱されストレスを感じやすい', love:'大きなビジョンを共有できる相手を求める。共に何かを築き上げるパートナーシップを望むタイプ' },
+      phase: { now:'大きな構想を現実に落とし込む、実現力が試される重要な時期', next:'築き上げてきたものが社会的な形として結実し、大きな評価を得るステージ', past:'大きな夢を諦めずに追い続けてきた経験が今の実現力の土台になっている' },
+      talent: { how:'大きなビジョンと実践的な計画力を組み合わせ、大規模なプロジェクトを完成させる力で輝く', hidden:'都市計画・組織構築・社会システムなど「大きな仕組みを作る」才能', env:'大きな裁量とリソースを扱える、長期的な視点が尊重される環境' },
+      mind: { drop:'理想と現実のギャップが大きいと感じると強い焦燥感に襲われる', belief:'「大きなことを成し遂げなければ意味がない」という無意識のプレッシャー', up:'構想してきた大きなビジョンが一歩ずつ形になっていく実感' },
+      advice: { do:'大きな目標を小さなステップに分解して一つずつ着実に進める', avoid:'完璧な計画ができるまで動き出さないこと', step:'今日、大きな計画の中の小さな一歩を一つだけ実行する' },
+      money: { income:'大規模なプロジェクト・事業・社会的な仕組みづくりから大きな収入が生まれる', work:'経営者・都市計画・組織開発・大規模プロジェクトの責任者', style:'長期的な視点で大きな裁量を持てる環境で本領を発揮する' },
+      choice: { axis:'「これは長期的に社会や周囲に価値をもたらすか？」', yesno:'大きな絵の一部として腹落ちする方がYES' }
+    },
+    love_katsu: {
+      tendency: '共に何かを築き上げるパートナーシップを望むタイプ。恋活では大きな将来像を語れる相手に惹かれる。婚活では人生を共に構築できる、実務的にも頼れる相手を重視する。',
+      caution: '大きな目標に意識が向きすぎて、日常の小さな愛情表現がおろそかになることがある。完璧な計画を求めすぎて動き出せないことも。',
+      mindset: '「大きなビジョン」と同じくらい「今この瞬間の関係」を大切にすること。小さな日常の積み重ねが、大きな未来を共に築く土台になると知ろう。'
+    },
+    career: {
+      suitable: ['経営者', '都市計画・建築', '組織開発', '大規模プロジェクトマネージャー', '社会起業家', 'コンサルタント', 'エンジニア', '政策関連職'],
+      strength: '大きなビジョンを現実に落とし込む実現力。長期的な視点と実践的な計画力で、社会に残る大きな成果を生み出せる。',
+      job_change: '「自分の構想を実現する場がない」と感じたら転機のサイン。完璧なタイミングを待ちすぎず、小さく始められる場から動くことが大切。'
+    }
+  },
+  33: {
+    deep: {
+      relations: { fit:'2・6など愛情深く協調的な人と深い信頼関係を築ける', hard:'1・8など自己中心的で結果重視の人には無理解を感じやすい。境界線を大切に', love:'無償の愛で相手を支える。相手の成長と幸せを心から願う献身的なタイプ' },
+      phase: { now:'深い愛と智慧を人々に伝えることに使命感を感じる、教え導く時期', next:'これまでの経験と愛が、多くの人を癒し導く大きな影響力として結実するステージ', past:'深い愛と自己犠牲を経験してきたことが今の圧倒的な包容力を育てた' },
+      talent: { how:'深い愛情と教える力を活かし、人を育てメンター的な立場で輝く', hidden:'教育・ヒーリング・精神的指導など「人を癒し導く」分野の非凡な才能', env:'人の成長を支えることが評価される、温かく誠実な環境' },
+      mind: { drop:'与え続けても報われないと感じると深い虚しさを覚える', belief:'「自分を犠牲にしてでも人を救わなければ」という無意識の使命感', up:'自分が導いた誰かが幸せに成長した姿を見た瞬間' },
+      advice: { do:'与えるのと同じだけ自分自身も大切にケアする時間を作る', avoid:'自分を犠牲にしてまで他者の期待に応え続けること', step:'今日、自分のために小さなご褒美を一つ用意する' },
+      money: { income:'教育・指導・ヒーリングなど人を導く活動から巡り巡って収入が生まれる', work:'教育者・メンター・ヒーラー・精神的指導者', style:'人の成長に長期的に関われる環境でやりがいを感じ力を発揮する' },
+      choice: { axis:'「これは愛から出た選択か、自己犠牲からの選択か？」', yesno:'心が満たされる方がYES、消耗する方はNO' }
+    },
+    love_katsu: {
+      tendency: '無償の愛で相手を支える献身的なタイプ。恋活では相手を癒す存在として惹かれる人が多い。婚活では相手の成長を心から願える、深い愛のある関係を求める。',
+      caution: '尽くしすぎて自分を犠牲にし、静かに消耗してしまうことがある。相手の課題まで自分ごとのように背負い込みやすい点に注意。',
+      mindset: '「与える愛」と同じだけ「受け取る愛」も大切にすること。自分を満たすことは自己中心的ではなく、より深い愛を長く注ぐための土台になる。'
+    },
+    career: {
+      suitable: ['教育者', 'メンター・コーチ', 'ヒーラー・セラピスト', '精神的指導者', 'ソーシャルワーカー', 'カウンセラー', '医療・福祉', '執筆・講演活動'],
+      strength: '深い愛と教える力で人を育て、癒し導く圧倒的な包容力。多くの人の人生に長期的な良い影響を与えられる。',
+      job_change: '「与えるばかりで満たされない」と感じたら転機のサイン。自己犠牲のパターンを繰り返さないよう、自分も満たされる環境かを基準に選ぶと吉。'
+    }
+  }
+};
+
+// ─── 天性数（未来数）計算：月＋日の合計を1桁（またはマスターナンバー）まで還元 ─
+function calcTensei(month, day) {
+  let sum = (month + day);
+  if(sum === 11 || sum === 22 || sum === 33) return sum;
+  while(sum >= 10) {
+    sum = sum.toString().split('').reduce((a,b) => a + parseInt(b), 0);
+    if(sum === 11 || sum === 22 || sum === 33) return sum;
+  }
+  return sum;
+}
+
+// ─── ライフパスナンバー（現在数）計算：年月日の全桁を一度に合算して還元 ────
+function calcLifePath(year, month, day) {
+  let sum = (year.toString() + month.toString() + day.toString())
+    .split('').reduce((a,b) => a + parseInt(b), 0);
+  if(sum === 11 || sum === 22 || sum === 33) return sum;
+  while(sum >= 10) {
+    sum = sum.toString().split('').reduce((a,b) => a + parseInt(b), 0);
+    if(sum === 11 || sum === 22 || sum === 33) return sum;
+  }
+  return sum;
+}
+
+// ─── 誕生数（生まれた日）を1〜9に単純還元（マスターナンバーは保持しない） ───
+function digitRootSimple(n) {
+  while (n >= 10) {
+    n = n.toString().split('').reduce((a,b) => a + parseInt(b), 0);
+  }
+  return n;
+}
+
+// ─── 隠れた性格（1〜31日、日付そのまま） ──────────────────────
+const HIDDEN_PERSONALITY = {
+  1: '強がりだけど実は繊細。人一倍、認められたい気持ちが強い。',
+  2: 'やさしすぎて断れない。争いが苦手で、心の中で我慢しがち。',
+  3: '明るく見えて、内面は寂しがり屋。誰かに深く理解されたいと思っている。',
+  4: 'しっかり者に見えて、変化が怖い。冒険より安心を選びがち。',
+  5: '自由人に見えて、実は構ってほしい。愛されたい願望が強め。',
+  6: '優しすぎて心配性。周りに尽くしすぎて、自分が後回しになりがち。',
+  7: '冷静に見えるけど、心の奥ではロマンチスト。ひとりの時間がとても大事。',
+  8: '頼られがちだけど、本当は弱音を吐きたい。強がってしまうタイプ。',
+  9: 'おおらかに見えて、実は完璧主義。人からの評価に敏感。',
+  10: '行動力があるようでいて、実はかなり慎重。内面はガラスのハート。',
+  11: '直感型で不思議系。でも本人は論理派になろうとしてギャップに悩む。',
+  12: '社交的に見えて、深い関係を築くのが苦手。心を許すのに時間がかかる。',
+  13: '真面目に見えるけど、実は反骨精神の持ち主。こっそり反発心がある。',
+  14: '勢いがあるけど、ブレーキが効きにくい。迷いやすいところも。',
+  15: '愛されキャラ。でも実は、誰よりも人を観察している慎重派。',
+  16: 'ミステリアスな印象。本人も自分の心の奥にある本音に気づいていないことが。',
+  17: 'しっかりして見えるけど、実は不器用。愛情表現が下手で誤解されがち。',
+  18: '包容力があるようで、内面ではずっと葛藤している。自分を責めがち。',
+  19: '自立しているように見えて、実は誰かに甘えたい。孤独を感じやすい。',
+  20: '人の気持ちに敏感すぎて疲れやすい。無意識に空気を読みすぎる。',
+  21: '盛り上げ上手でも、本当は繊細。気を遣いすぎて一人になるとドッと疲れる。',
+  22: '安定感抜群。でも本当は波乱を求めている。刺激に惹かれる面も。',
+  23: '自由そうに見えて、孤独を恐れている。誰かと「本気でつながりたい」願望あり。',
+  24: '家庭的な雰囲気でも、心の中では「もっと自由になりたい」と思っている。',
+  25: 'クールに見えて、心はとても感情豊か。愛されると一気に心を開く。',
+  26: '頼れる存在。でも心の奥では「誰かに頼りたい」と思っている。',
+  27: '理想主義者で、こだわりが強い。人に合わせすぎるとストレスに。',
+  28: '自信たっぷりに見えて、実は傷つきやすい。反応を気にするタイプ。',
+  29: '優しさのかたまり。でも本当は感情の波が激しく、疲れやすい。',
+  30: 'にぎやかで人気者。でも本当は、一人の時間がないとしんどい。',
+  31: '現実主義に見えて、内面では夢を追っている。ギャップが魅力。'
+};
+
+// ─── 恋愛傾向（1〜31日、日付そのまま） ──────────────────────
+const LOVE_TENDENCY_BY_DAY = {
+  1: { type:'リーダータイプ', desc:'自分から積極的にアプローチ。追われるより追う恋が燃える。' },
+  2: { type:'尽くしタイプ', desc:'相手を優先しすぎることも。甘えられると弱い。' },
+  3: { type:'楽しい恋愛タイプ', desc:'恋も遊びも全力！刺激がないと飽きやすい。' },
+  4: { type:'慎重派', desc:'一度好きになったら一途。心を開くまで時間がかかる。' },
+  5: { type:'自由人', desc:'束縛NG！自分のペースで恋を楽しみたい。' },
+  6: { type:'愛情深い', desc:'恋人に尽くしすぎる傾向。理想の相手を求めるロマンチスト。' },
+  7: { type:'ミステリアス', desc:'恋愛より自分の世界が大事。精神的に深い絆を求める。' },
+  8: { type:'頼れるタイプ', desc:'恋人に対して責任感が強い。パートナーシップを大切にする。' },
+  9: { type:'博愛主義', desc:'愛情深く誰にでも優しい。恋愛と友情の境界があいまいなことも。' },
+  10: { type:'情熱的な恋愛', desc:'恋に落ちると一直線！ストレートに気持ちを伝える。' },
+  11: { type:'直感型', desc:'相手の本質をすぐに見抜く。不思議とモテる。' },
+  12: { type:'社交的', desc:'フレンドリーで誰とでも仲良くなれる。恋の駆け引きも得意。' },
+  13: { type:'誠実派', desc:'真面目な恋愛を求める。一度決めたら最後まで添い遂げる。' },
+  14: { type:'刺激を求める', desc:'変化のある恋が好き。マンネリが苦手。' },
+  15: { type:'愛され体質', desc:'無意識に周りを惹きつける。恋人には甘え上手。' },
+  16: { type:'ロマンチスト', desc:'運命の恋を信じている。理想が高め。' },
+  17: { type:'プライドが高い', desc:'恋愛では主導権を握りたい。頼れる相手に弱い。' },
+  18: { type:'包容力がある', desc:'困っている人を放っておけない。母性的な愛情を持つ。' },
+  19: { type:'自立型', desc:'恋愛も自分のスタイルを大事にする。依存されるのは苦手。' },
+  20: { type:'共感力が高い', desc:'相手の気持ちをすぐ察する。繊細で傷つきやすい。' },
+  21: { type:'恋を楽しむタイプ', desc:'刺激的な恋が好き。常にワクワクしていたい。' },
+  22: { type:'堅実派', desc:'結婚を前提とした恋愛をしがち。慎重に相手を選ぶ。' },
+  23: { type:'自由な恋愛観', desc:'縛られない恋を好む。束縛されると逃げたくなる。' },
+  24: { type:'家庭的', desc:'安定した恋愛を求める。結婚願望が強め。' },
+  25: { type:'クールな恋愛', desc:'理屈で考えるタイプ。好きでも態度に出にくい。' },
+  26: { type:'頼れる存在', desc:'恋人を支えたいタイプ。甘えられると嬉しい。' },
+  27: { type:'理想を追う', desc:'妥協しない恋愛観。精神的に繋がれる相手を求める。' },
+  28: { type:'自信家', desc:'恋愛でも主導権を握りたい。熱しやすく冷めやすい。' },
+  29: { type:'感受性豊か', desc:'恋愛で気持ちが大きく揺れ動く。運命を感じやすい。' },
+  30: { type:'恋も遊びも全力', desc:'好きになったら一途。楽しさを求める。' },
+  31: { type:'現実的な恋愛', desc:'好きな人には誠実。安定した関係を築きたい。' }
+};
+
+// ─── 向いている職業（生まれた日を1〜9に単純還元したグループ） ───────
+const BIRTHDAY_CAREER = {
+  1: { type:'リーダータイプ', jobs:['起業家','営業','経営者','プロデューサー','スポーツ選手'], trait:'決断力があり、挑戦を恐れない。人を引っ張る仕事が向いている。' },
+  2: { type:'サポータータイプ', jobs:['カウンセラー','秘書','接客業','教育','医療系'], trait:'共感力があり、人のサポートが得意。チームプレーに向いている。' },
+  3: { type:'クリエイティブタイプ', jobs:['芸術家','デザイナー','ライター','広報','エンタメ業界'], trait:'自由な発想と表現力がある。楽しく働ける環境が大切。' },
+  4: { type:'堅実タイプ', jobs:['公務員','エンジニア','会計士','研究者','不動産業'], trait:'コツコツ努力できるタイプ。安定した職業で力を発揮。' },
+  5: { type:'自由人タイプ', jobs:['ジャーナリスト','旅行関係','マーケティング','営業','貿易'], trait:'変化を求めるタイプ。ルーティンワークより、刺激のある環境が向いている。' },
+  6: { type:'愛の人タイプ', jobs:['看護師','保育士','美容','接客業','福祉関係'], trait:'人を癒す力があり、温かみのある仕事で輝く。' },
+  7: { type:'探求者タイプ', jobs:['研究者','占い師','哲学者','IT','分析職'], trait:'一人で深く考える仕事が向いている。独自の視点を活かせる職業が◎。' },
+  8: { type:'パワフル成功者タイプ', jobs:['経営者','投資家','スポーツ','金融','不動産業'], trait:'結果を出す力があり、大きな成功を掴みやすい。競争のある環境で強い。' },
+  9: { type:'理想主義タイプ', jobs:['NPO','教育','クリエイター','カウンセラー','芸術家'], trait:'人のために働くと力を発揮。枠にとらわれない仕事が向いている。' }
+};
+
+// ─── 誕生数セクション描画 ────────────────────────────────
+function renderBirthdaySection(day) {
+  const hp = HIDDEN_PERSONALITY[day];
+  const lt = LOVE_TENDENCY_BY_DAY[day];
+  const bc = BIRTHDAY_CAREER[digitRootSimple(day)];
+  const tags = bc.jobs.map(j => `<span class="career-tag">${j}</span>`).join('');
+  document.getElementById('bday-section').innerHTML = `
+    <div class="bday-block personality">
+      <div class="bb-header">◆ 隠れた性格</div>
+      <div class="bb-text">${hp}</div>
+    </div>
+    <div class="bday-block love-day">
+      <div class="bb-header">◆ 恋愛傾向：${lt.type}</div>
+      <div class="bb-text">${lt.desc}</div>
+    </div>
+    <div class="bday-block career-day">
+      <div class="bb-header">◆ 向いている職業：${bc.type}</div>
+      <div class="bb-text">${bc.trait}</div>
+      <div class="bb-tags">${tags}</div>
+    </div>
+  `;
+}
+
+// ─── 深層7セクション描画 ────────────────────────────────
+function deepItem(label, value, highlight) {
+  return `<div class="deep-item${highlight?' highlight':''}"><div class="d-label">${label}</div><div class="d-value">${value}</div></div>`;
+}
+
+function renderDeepSections(ld) {
+  const d = ld.deep;
+  const container = document.getElementById('deep-sections');
+  const sections = [
+    {
+      num:'①', icon:'♡', title:'人間関係・相性',
+      html: `<div class="deep-grid cols2">
+        ${deepItem('合う人タイプ', d.relations.fit, true)}
+        ${deepItem('苦手なタイプと対処法', d.relations.hard, false)}
+      </div>
+      ${deepItem('恋愛・パートナーシップの傾向', d.relations.love, false)}`
+    },
+    {
+      num:'②', icon:'◎', title:'人生の流れ（フェーズ）',
+      html: `<div class="deep-grid cols3">
+        ${deepItem('今のステージ', d.phase.now, true)}
+        ${deepItem('次に来るテーマ', d.phase.next, false)}
+        ${deepItem('過去の意味づけ', d.phase.past, false)}
+      </div>`
+    },
+    {
+      num:'③', icon:'✦', title:'才能の使い方・活かし方',
+      html: `<div class="deep-grid cols2">
+        ${deepItem('得意の活かし方', d.talent.how, true)}
+        ${deepItem('眠っている才能', d.talent.hidden, false)}
+      </div>
+      ${deepItem('やる気が出る環境', d.talent.env, false)}`
+    },
+    {
+      num:'④', icon:'◇', title:'思考・感情のクセ',
+      html: `<div class="deep-grid cols3">
+        ${deepItem('落ち込みやすいポイント', d.mind.drop, false)}
+        ${deepItem('無意識の思い込み', d.mind.belief, false)}
+        ${deepItem('エネルギーが上がる状態', d.mind.up, true)}
+      </div>`
+    },
+    {
+      num:'⑤', icon:'▷', title:'行動アドバイス',
+      html: `<div class="advice-box">
+        <div class="adv-step"><span class="adv-badge">今やること</span><span class="adv-text">${d.advice.do}</span></div>
+        <div class="adv-step"><span class="adv-badge" style="color:#e0d080;background:rgba(180,160,0,0.15);border-color:rgba(180,160,0,0.3);">待つこと</span><span class="adv-text">${d.advice.avoid}</span></div>
+      </div>
+      <div class="advice-box" style="margin-top:0.6rem;background:linear-gradient(135deg,rgba(60,30,80,0.4),rgba(40,10,60,0.5));border-color:rgba(150,80,200,0.3);">
+        <div class="adv-step"><span class="adv-badge" style="color:#c080ff;background:rgba(150,80,200,0.15);border-color:rgba(150,80,200,0.3);">具体的な一歩</span><span class="adv-text">${d.advice.step}</span></div>
+      </div>`
+    },
+    {
+      num:'⑦', icon:'◈', title:'お金・仕事の流れ',
+      html: `<div class="deep-grid cols3">
+        ${deepItem('お金の入り方のタイプ', d.money.income, true)}
+        ${deepItem('向いてる働き方', d.money.work, false)}
+        ${deepItem('ハマる仕事スタイル', d.money.style, false)}
+      </div>`
+    },
+    {
+      num:'⑨', icon:'◉', title:'選択の軸',
+      html: `<div class="deep-grid cols2">
+        ${deepItem('迷ったときの基準', d.choice.axis, true)}
+        ${deepItem('YES / NOの感覚の持ち方', d.choice.yesno, false)}
+      </div>`
+    }
+  ];
+
+  container.innerHTML = sections.map(s => `
+    <div class="section-card">
+      <div class="section-title">
+        <span class="sec-num">${s.num}</span>
+        <span class="icon">${s.icon}</span>
+        <span>${s.title}</span>
+      </div>
+      ${s.html}
+    </div>
+  `).join('');
+}
+
+// ─── 適職・転職セクション描画 ────────────────────────────────
+function renderCareer(ld) {
+  const c = ld.career;
+  const section = document.getElementById('career-section');
+  const tags = c.suitable.map(t => `<span class="career-tag">${t}</span>`).join('');
+  section.innerHTML = `
+    <div class="career-jobs">
+      <div class="cj-label">◇ 向いている職種・仕事</div>
+      <div class="career-tags">${tags}</div>
+    </div>
+    <div class="career-block strength">
+      <div class="cb-header">✦ 仕事での強み</div>
+      <div class="cb-text">${c.strength}</div>
+    </div>
+    <div class="career-block job-change">
+      <div class="cb-header">◑ 転職のタイミングと心がけ</div>
+      <div class="cb-text">${c.job_change}</div>
+    </div>
+  `;
+}
+
+// ─── 恋活・婚活セクション描画 ────────────────────────────────
+function renderLoveKatsu(ld) {
+  const lk = ld.love_katsu;
+  const section = document.getElementById('love-katsu-section');
+  section.innerHTML = `
+    <div class="love-block tendency">
+      <div class="lb-header">♡ 恋活・婚活の傾向</div>
+      <div class="lb-text">${lk.tendency}</div>
+    </div>
+    <div class="love-block caution">
+      <div class="lb-header">⚠ 注意したいポイント</div>
+      <div class="lb-text">${lk.caution}</div>
+    </div>
+    <div class="love-block mindset">
+      <div class="lb-header">✦ 上手くいく意識の持ち方</div>
+      <div class="lb-text">${lk.mindset}</div>
+    </div>
+  `;
+}
+
+// ─── 結論カード描画 ───────────────────────────────────────────
+function renderConclusion(ts, lp, tenseiNum, lifepathNum) {
+  const nums = document.getElementById('conclusion-numbers');
+  nums.innerHTML = `
+    <div class="conclusion-num-item">
+      <div class="cn-label">未 来 数</div>
+      <div class="cn-value">${tenseiNum}</div>
+      <div class="cn-type">${ts.type}</div>
+    </div>
+    <div class="conclusion-num-item">
+      <div class="cn-label">現 在 数</div>
+      <div class="cn-value">${lifepathNum}</div>
+      <div class="cn-type">${lp.type}</div>
+    </div>
+  `;
+  document.getElementById('conclusion-theme').textContent =
+    '人生テーマ：' + (lp.traits['人生テーマ'] || lp.desc.slice(0, 28) + '…');
+}
+
+// ─── ChatGPT画像プロンプト生成 ───────────────────────────────
+let _chatgptData = null;
+
+function buildChatGPTPrompt(ts, lp, ld, tenseiNum, lifepathNum, year, month, day) {
+  const d  = ld.deep;
+  const c  = ld.career;
+  const lk = ld.love_katsu;
+  const hp = HIDDEN_PERSONALITY[day];
+  const lt = LOVE_TENDENCY_BY_DAY[day];
+  const bc = BIRTHDAY_CAREER[digitRootSimple(day)];
+  return `以下の占い結果を美しいインフォグラフィック画像カードとして作成してください。
+
+■ 全体デザイン
+縦長カード（スマートフォン縦型、A4比率）
+背景：浅いピンク×グラデーション、神秘的な星空テイスト
+フォント：和風×、高級感ある雰囲気
+文字のフォント：やさしい明朝体
+
+■ エリア構成（上から順に配置）
+
+【エリア①】最上部 — 結論バナー（目立つ大見出し）
+${year}年${month}月${day}日生まれ　数秘鑑定書
+未来数：${tenseiNum}（${ts.type}）　現在数：${lifepathNum}（${lp.type}）
+人生テーマ：${lp.traits['人生テーマ'] || ''}
+
+【エリア②】2カラム — 未来数 ／ 現在数
+
+◆ 未来数 ${tenseiNum}　${ts.type}
+${ts.keyword}
+${ts.desc.slice(0, 60)}…
+
+◆ 現在数 ${lifepathNum}　${lp.type}
+${lp.keyword}
+${lp.desc.slice(0, 60)}…
+守護星：${lp.traits['守護星']}
+強み：${lp.traits['強み']}
+才能：${lp.traits['才能']}
+
+【エリア③】2カラム — 適職・転職 ／ 恋活・婚活
+
+◆ 適職・転職
+向いている職種：${c.suitable.join('　')}
+仕事での強み：${c.strength}
+転職のタイミング：${c.job_change}
+
+◆ 恋活・婚活
+傾向：${lk.tendency}
+注意ポイント：${lk.caution}
+うまくいく意識：${lk.mindset}
+
+【エリア④】全幅 — 誕生数（生まれた日）でわかること
+
+◆ 隠れた性格
+${hp}
+
+◆ 恋愛傾向：${lt.type}
+${lt.desc}
+
+◆ 向いている職業：${bc.type}
+${bc.trait}
+向いてる職種：${bc.jobs.join('　')}
+
+【エリア⑤】最下部 — 総合結果（全幅、まとめテキストエリア）
+
+◆ 総合結果
+${lp.traits['人生テーマ'] || ''}　強み：${lp.traits['強み']}
+今やること：${d.advice.do}　／　一歩：${d.advice.step}
+向いてる仕事：${c.suitable.slice(0,3).join('・')}　迷ったときの基準：${d.choice.axis}
+
+【免責事項】最下端に小さく表示
+本鑑定は統計的傾向に基づくものです。結果を保証するものではありません。`;
+}
+
+function copyForChatGPT() {
+  if (!_chatgptData) return;
+  const {ts, lp, ld, tenseiNum, lifepathNum, year, month, day} = _chatgptData;
+  const prompt = buildChatGPTPrompt(ts, lp, ld, tenseiNum, lifepathNum, year, month, day);
+  const notice = document.getElementById('copy-notice');
+  const show = () => { notice.classList.add('show'); setTimeout(() => notice.classList.remove('show'), 3000); };
+  navigator.clipboard ? navigator.clipboard.writeText(prompt).then(show).catch(() => fallbackCopy(prompt, show))
+                      : fallbackCopy(prompt, show);
+}
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta); cb();
+}
+
+// ─── メイン占い処理 ──────────────────────────────────────────
+function divinate() {
+  const year    = parseInt(document.getElementById('birthYear').value);
+  const month   = parseInt(document.getElementById('birthMonth').value);
+  const day     = parseInt(document.getElementById('birthDay').value);
+
+  if(!year || !month || !day || isNaN(year)||isNaN(month)||isNaN(day)) {
+    alert('生年月日を入力してください。'); return;
+  }
+
+  // ── 計算
+  const tenseiNum   = calcTensei(month, day);
+  const lifepathNum = calcLifePath(year, month, day);
+
+  const ts = TENSEI[tenseiNum]   || TENSEI[9]; // fallback
+  const lp = TENSEI[lifepathNum] || TENSEI[9]; // fallback
+  const ld = LIFE_DEEP[lifepathNum] || LIFE_DEEP[9]; // 深層データは現在数を軸に展開
+
+  // ── ヘッダー
+  document.getElementById('display-name').textContent = '◈ あなたの占い結果 ◈';
+  document.getElementById('display-date').textContent =
+    `${year}年${month}月${day}日生まれ`;
+
+  // ── 未来数
+  const te = document.getElementById('tensei-emblem');
+  te.style.background = `linear-gradient(135deg, ${ts.color[0]}, ${ts.color[1]})`;
+  document.getElementById('tensei-num').textContent = tenseiNum;
+  document.getElementById('tensei-type').textContent = ts.type;
+  document.getElementById('tensei-keyword').textContent = ts.keyword;
+  document.getElementById('tensei-desc').textContent = ts.desc;
+
+  // ── 現在数
+  document.getElementById('lifepath-num').textContent = lifepathNum;
+  document.getElementById('lifepath-type').textContent = lp.type;
+  document.getElementById('lifepath-keyword').textContent = lp.keyword;
+  document.getElementById('lifepath-desc').textContent = lp.desc;
+
+  // traits（現在数の特性）
+  const tg = document.getElementById('traits-grid');
+  tg.innerHTML = '';
+  Object.entries(lp.traits).forEach(([k,v]) => {
+    tg.innerHTML += `<div class="trait-item"><div class="trait-label">${k}</div><div class="trait-value">${v}</div></div>`;
+  });
+
+  // ── 誕生数（生まれた日）でわかること
+  renderBirthdaySection(day);
+
+  // ── 深層7セクション
+  renderDeepSections(ld);
+
+  // ── 適職・転職
+  renderCareer(ld);
+
+  // ── 恋活・婚活
+  renderLoveKatsu(ld);
+
+  // ── 結論カード
+  renderConclusion(ts, lp, tenseiNum, lifepathNum);
+
+  // ── ChatGPTプロンプトデータ保存
+  _chatgptData = { ts, lp, ld, tenseiNum, lifepathNum, year, month, day };
+
+  // ── 表示
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+  resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+</body>
+</html>
