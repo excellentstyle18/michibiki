@@ -1316,7 +1316,7 @@ function deepItem(label, value, highlight) {
   return `<div class="deep-item${highlight?' highlight':''}"><div class="d-label">${label}</div><div class="d-value">${value}</div></div>`;
 }
 
-function renderDeepSections(ld) {
+function renderDeepSections(ld, lp) {
   const d = ld.deep;
   const container = document.getElementById('deep-sections');
   const sections = [
@@ -1363,6 +1363,14 @@ function renderDeepSections(ld) {
       </div>`
     },
     {
+      num:'⑥', icon:'☼', title:'意思決定の特徴',
+      html: `<div class="deep-grid cols3">
+        ${deepItem('自分の本質を読む', `自分の価値観・使命感・強みを確認する。${lp.traits['人生テーマ'] || lp.desc}`, true)}
+        ${deepItem('判断の癖を読む', `${d.choice.yesno}`, false)}
+        ${deepItem('迷った時の軸を読む', `${d.choice.axis}`, false)}
+      </div>`
+    },
+    {
       num:'⑦', icon:'◈', title:'お金・仕事の流れ',
       html: `<div class="deep-grid cols3">
         ${deepItem('お金の入り方のタイプ', d.money.income, true)}
@@ -1371,10 +1379,10 @@ function renderDeepSections(ld) {
       </div>`
     },
     {
-      num:'⑨', icon:'◉', title:'選択の軸',
+      num:'⑨', icon:'◉', title:'選択の軸（補足）',
       html: `<div class="deep-grid cols2">
-        ${deepItem('迷ったときの基準', d.choice.axis, true)}
-        ${deepItem('YES / NOの感覚の持ち方', d.choice.yesno, false)}
+        ${deepItem('迷いが強いときの一言', d.choice.axis, true)}
+        ${deepItem('心が動く方向', d.choice.yesno, false)}
       </div>`
     }
   ];
@@ -1588,7 +1596,7 @@ function divinate() {
   renderBirthdaySection(day);
 
   // ── 深層7セクション
-  renderDeepSections(ld);
+  renderDeepSections(ld, lp);
 
   // ── 適職・転職
   renderCareer(ld);
